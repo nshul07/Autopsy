@@ -1,0 +1,39 @@
+# Secrets — never commit
+.env
+.env.local
+*.key
+*.pem
+
+# Uploaded / analyzed artifacts — must never be committed
+*.apk
+*.xapk
+*.dex
+*.jar
+demo/android-demo-apps/build/
+demo/recording/*.mp4
+
+# Intel database (aggregate counts, rebuilt locally)
+intel.db
+intel.db-wal
+intel.db-shm
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Node
+node_modules/
+dist/
+.vite/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

@@ -1,0 +1,52 @@
+{
+  "_comment": "Hindi action playbook. Keys must match playbook_en.json exactly.",
+  "version": 1,
+  "lang": "hi",
+  "playbooks": {
+    "red.otp_stealer": [
+      { "step_key": "playbook.red.do_not_install" },
+      { "step_key": "playbook.red.remove", "params": ["app"] },
+      { "step_key": "playbook.red.otp_shared" },
+      { "step_key": "playbook.red.report" }
+    ],
+    "red.banking_trojan": [
+      { "step_key": "playbook.red.do_not_install" },
+      { "step_key": "playbook.red.remove", "params": ["app"] },
+      { "step_key": "playbook.red.check_bank" },
+      { "step_key": "playbook.red.report" }
+    ],
+    "red.repackaged_signer": [
+      { "step_key": "playbook.red.do_not_install" },
+      { "step_key": "playbook.red.official_only", "params": ["app"] },
+      { "step_key": "playbook.red.remove", "params": ["app"] },
+      { "step_key": "playbook.red.report" }
+    ],
+    "red.default": [
+      { "step_key": "playbook.red.do_not_install" },
+      { "step_key": "playbook.red.remove", "params": ["app"] },
+      { "step_key": "playbook.red.report" }
+    ],
+    "yellow.default": [
+      { "step_key": "playbook.yellow.official_source" },
+      { "step_key": "playbook.yellow.check_reviews" },
+      { "step_key": "playbook.yellow.ask_someone" }
+    ],
+    "green.default": [
+      { "step_key": "playbook.green.keep_updated" },
+      { "step_key": "playbook.green.still_careful" }
+    ]
+  },
+  "strings": {
+    "playbook.red.do_not_install": "यह ऐप इंस्टॉल न करें।",
+    "playbook.red.remove": "अगर आपने पहले ही इंस्टॉल कर लिया है: Settings खोलें, फिर Apps, फिर {app}, और अब हटा दें।",
+    "playbook.red.otp_shared": "अगर आपने कभी किसी को OTP या PIN बताया है, तो अभी अपने बैंक को कॉल करके बताएं।",
+    "playbook.red.check_bank": "अपने बैंक खाते में देखें कि कोई ऐसा लेन-देन तो नहीं जो आपने नहीं किया, और बैंक को बताएं।",
+    "playbook.red.official_only": "{app} को सिर्फ़ उसकी आधिकारिक Play Store लिस्टिंग से इंस्टॉल करें।",
+    "playbook.red.report": "इसकी शिकायत करें: 1930 पर कॉल करें, या cybercrime.gov.in पर जाएं।",
+    "playbook.yellow.official_source": "यह ऐप सिर्फ़ आधिकारिक Play Store लिस्टिंग से डाउनलोड करें, किसी लिंक से नहीं।",
+    "playbook.yellow.check_reviews": "इसके रिव्यू पढ़ें और देखें कि इसे किसने बनाया है।",
+    "playbook.yellow.ask_someone": "अगर पक्का न लगे, तो इंस्टॉल करने से पहले किसी भरोसेमंद से पूछ लें।",
+    "playbook.green.keep_updated": "ऐप को आधिकारिक स्टोर से अपडेट रखें।",
+    "playbook.green.still_careful": "किसी को भी OTP या PIN न बताएं, चाहे कोई ऐप या कॉल करने वाला कहे।"
+  }
+}

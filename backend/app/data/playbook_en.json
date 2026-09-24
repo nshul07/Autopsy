@@ -1,0 +1,52 @@
+{
+  "_comment": "Action playbook (F15). Purely presentational - contributes 0 points and never changes the verdict. Ordered steps, short sentences.",
+  "version": 1,
+  "lang": "en",
+  "playbooks": {
+    "red.otp_stealer": [
+      { "step_key": "playbook.red.do_not_install" },
+      { "step_key": "playbook.red.remove", "params": ["app"] },
+      { "step_key": "playbook.red.otp_shared" },
+      { "step_key": "playbook.red.report" }
+    ],
+    "red.banking_trojan": [
+      { "step_key": "playbook.red.do_not_install" },
+      { "step_key": "playbook.red.remove", "params": ["app"] },
+      { "step_key": "playbook.red.check_bank" },
+      { "step_key": "playbook.red.report" }
+    ],
+    "red.repackaged_signer": [
+      { "step_key": "playbook.red.do_not_install" },
+      { "step_key": "playbook.red.official_only", "params": ["app"] },
+      { "step_key": "playbook.red.remove", "params": ["app"] },
+      { "step_key": "playbook.red.report" }
+    ],
+    "red.default": [
+      { "step_key": "playbook.red.do_not_install" },
+      { "step_key": "playbook.red.remove", "params": ["app"] },
+      { "step_key": "playbook.red.report" }
+    ],
+    "yellow.default": [
+      { "step_key": "playbook.yellow.official_source" },
+      { "step_key": "playbook.yellow.check_reviews" },
+      { "step_key": "playbook.yellow.ask_someone" }
+    ],
+    "green.default": [
+      { "step_key": "playbook.green.keep_updated" },
+      { "step_key": "playbook.green.still_careful" }
+    ]
+  },
+  "strings": {
+    "playbook.red.do_not_install": "Do not install this app.",
+    "playbook.red.remove": "If you already installed {app}: open Settings, then Apps, then {app}, and remove it now.",
+    "playbook.red.otp_shared": "If you ever shared an OTP or PIN with anyone, call your bank right now and tell them.",
+    "playbook.red.check_bank": "Check your bank account for any transaction you did not make, and tell your bank.",
+    "playbook.red.official_only": "Only install {app} from its official Play Store listing.",
+    "playbook.red.report": "Report it: call 1930, or go to cybercrime.gov.in.",
+    "playbook.yellow.official_source": "Download this app only from the official Play Store listing, not from a link.",
+    "playbook.yellow.check_reviews": "Read the reviews and check who published it.",
+    "playbook.yellow.ask_someone": "If you are not sure, ask someone you trust before installing it.",
+    "playbook.green.keep_updated": "Keep the app updated from the official store.",
+    "playbook.green.still_careful": "Do not share OTPs or PINs with anyone, even if an app or caller asks."
+  }
+}

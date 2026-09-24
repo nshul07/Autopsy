@@ -1,0 +1,16 @@
+{
+  "_comment": "Brand impersonation and repackaging reference data.",
+  "_warning": "NEVER invent or recall a certificate fingerprint, domain or package name from memory. An empty list means 'we cannot verify this brand yet' and is the CORRECT value. A fabricated fingerprint flags every legitimate app of that brand as malware, which is worse than having no check at all. Populate official_cert_sha256 only by running tools/collect_certs.py against an APK you obtained yourself from the vendor's official listing.",
+  "version": 1,
+  "brands": [
+    {
+      "brand": "SampleBank",
+      "aliases": ["samplebank", "sample bank"],
+      "official_domains": ["samplebank.example"],
+      "official_packages": ["com.samplebank.official"],
+      "official_cert_sha256": [],
+      "_note": "Fictional brand used for the hackathon demo. Do not replace with a real bank without sourcing every field from official listings."
+    }
+  ],
+  "signer_history_note": "Signer-change detection (core/signer_history.py) works with no brand data at all - it compares the cert seen for a package name against the cert stored from the previous scan. That path is the strongest repackaging signal and needs no entries here."
+}

@@ -1,0 +1,66 @@
+{
+  "_comment": "Scam patterns. 'requires' is a set of group ids; the pattern matches when ALL of them are present. 'requires_any' matches when at least one is present. Consequences must always be phrased conditionally - the permissions alone do not prove bad intent.",
+  "version": 1,
+  "patterns": [
+    {
+      "id": "otp_stealer",
+      "requires": ["sms"],
+      "requires_any": ["notification_listener", "accessibility"],
+      "bonus": 15,
+      "critical": true,
+      "reason_key": "pattern.otp_stealer"
+    },
+    {
+      "id": "banking_trojan",
+      "requires": ["overlay", "accessibility", "sms"],
+      "requires_any": [],
+      "bonus": 25,
+      "critical": true,
+      "reason_key": "pattern.banking_trojan"
+    },
+    {
+      "id": "spyware_profile",
+      "requires": ["microphone", "camera", "location", "boot"],
+      "requires_any": [],
+      "bonus": 15,
+      "critical": false,
+      "critical_if_no_launcher": true,
+      "reason_key": "pattern.spyware_profile"
+    },
+    {
+      "id": "dropper",
+      "requires": ["install_packages"],
+      "requires_any": [],
+      "bonus": 10,
+      "critical": false,
+      "excluded_categories": ["app_store", "file_manager"],
+      "reason_key": "pattern.dropper"
+    },
+    {
+      "id": "device_admin_lock",
+      "requires": ["device_admin"],
+      "requires_any": [],
+      "bonus": 15,
+      "critical": false,
+      "excluded_categories": ["device_management"],
+      "reason_key": "pattern.device_admin_lock"
+    },
+    {
+      "id": "call_intercept",
+      "requires": ["call_log", "calls", "microphone"],
+      "requires_any": [],
+      "bonus": 10,
+      "critical": false,
+      "reason_key": "pattern.call_intercept"
+    },
+    {
+      "id": "repackaged_signer",
+      "requires": [],
+      "requires_any": [],
+      "bonus": 30,
+      "critical": true,
+      "evaluated_by": "core.repackaging",
+      "reason_key": "pattern.repackaged_signer"
+    }
+  ]
+}

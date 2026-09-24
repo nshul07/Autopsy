@@ -1,0 +1,18 @@
+fastapi
+uvicorn[standard]
+python-multipart
+pydantic>=2
+pydantic-settings
+androguard>=4
+httpx
+tldextract
+rapidfuzz
+slowapi
+pytest
+pytest-asyncio
+pytest-cov
+ruff
+
+# Deliberately NOT included:
+#   python-whois  -> slow, frequently blocked, unreliable in a demo. Dropped in
+#                    AGENTS.md section 7. Add back only after the event, behind a flag.

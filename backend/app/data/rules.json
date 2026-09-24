@@ -1,0 +1,132 @@
+{
+  "_comment": "Permission groups and score points. Loaded once at startup by core/rules_loader.py. A GROUP scores once, however many of its permissions are declared. Component-derived groups are detected from <service>/<receiver> declarations, not uses-permission.",
+  "version": 1,
+  "bands": [
+    { "id": "low",    "min": 0,  "max": 25,  "verdict": "green",  "recommendation": "safe_to_proceed",    "label_key": "verdict.green" },
+    { "id": "medium", "min": 26, "max": 60,  "verdict": "yellow", "recommendation": "review_carefully",   "label_key": "verdict.yellow" },
+    { "id": "high",   "min": 61, "max": 100, "verdict": "red",    "recommendation": "do_not_install",     "label_key": "verdict.red" }
+  ],
+  "rules": {
+    "many_sensitive_threshold": 5,
+    "many_sensitive_points": 10,
+    "mismatch_points": 20,
+    "impersonation_points": 30,
+    "max_score": 100
+  },
+  "groups": {
+    "sms": {
+      "points": 20,
+      "label_key": "perm.sms",
+      "source": "permission",
+      "permissions": [
+        "android.permission.READ_SMS",
+        "android.permission.RECEIVE_SMS",
+        "android.permission.SEND_SMS",
+        "android.permission.RECEIVE_MMS",
+        "android.permission.RECEIVE_WAP_PUSH"
+      ]
+    },
+    "contacts": {
+      "points": 15,
+      "label_key": "perm.contacts",
+      "source": "permission",
+      "permissions": [
+        "android.permission.READ_CONTACTS",
+        "android.permission.WRITE_CONTACTS",
+        "android.permission.GET_ACCOUNTS"
+      ]
+    },
+    "call_log": {
+      "points": 20,
+      "label_key": "perm.call_log",
+      "source": "permission",
+      "permissions": [
+        "android.permission.READ_CALL_LOG",
+        "android.permission.WRITE_CALL_LOG",
+        "android.permission.PROCESS_OUTGOING_CALLS"
+      ]
+    },
+    "microphone": {
+      "points": 10,
+      "label_key": "perm.microphone",
+      "source": "permission",
+      "permissions": ["android.permission.RECORD_AUDIO"]
+    },
+    "camera": {
+      "points": 8,
+      "label_key": "perm.camera",
+      "source": "permission",
+      "permissions": ["android.permission.CAMERA"]
+    },
+    "location": {
+      "points": 8,
+      "label_key": "perm.location",
+      "source": "permission",
+      "permissions": [
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_BACKGROUND_LOCATION"
+      ]
+    },
+    "accessibility": {
+      "points": 25,
+      "label_key": "perm.accessibility",
+      "source": "component",
+      "component_signals": ["BIND_ACCESSIBILITY_SERVICE"],
+      "meta_data_names": ["android.accessibilityservice"],
+      "permissions": []
+    },
+    "overlay": {
+      "points": 20,
+      "label_key": "perm.overlay",
+      "source": "permission",
+      "permissions": ["android.permission.SYSTEM_ALERT_WINDOW"]
+    },
+    "install_packages": {
+      "points": 25,
+      "label_key": "perm.install_packages",
+      "source": "permission",
+      "permissions": [
+        "android.permission.REQUEST_INSTALL_PACKAGES",
+        "android.permission.INSTALL_PACKAGES"
+      ]
+    },
+    "notification_listener": {
+      "points": 15,
+      "label_key": "perm.notification_listener",
+      "source": "component",
+      "component_signals": ["BIND_NOTIFICATION_LISTENER_SERVICE"],
+      "meta_data_names": ["android.service.notification.NotificationListenerService"],
+      "permissions": []
+    },
+    "device_admin": {
+      "points": 20,
+      "label_key": "perm.device_admin",
+      "source": "component",
+      "component_signals": ["BIND_DEVICE_ADMIN"],
+      "meta_data_names": [],
+      "permissions": []
+    },
+    "calls": {
+      "points": 10,
+      "label_key": "perm.calls",
+      "source": "permission",
+      "permissions": [
+        "android.permission.CALL_PHONE",
+        "android.permission.ANSWER_PHONE_CALLS"
+      ]
+    },
+    "all_files": {
+      "points": 10,
+      "label_key": "perm.all_files",
+      "source": "permission",
+      "permissions": ["android.permission.MANAGE_EXTERNAL_STORAGE"]
+    },
+    "boot": {
+      "points": 0,
+      "label_key": "perm.boot",
+      "source": "permission",
+      "permissions": ["android.permission.RECEIVE_BOOT_COMPLETED"]
+    }
+  }
+}
