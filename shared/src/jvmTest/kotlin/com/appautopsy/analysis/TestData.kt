@@ -1,5 +1,8 @@
 package com.appautopsy.analysis
 
+import com.appautopsy.analysis.catalog.Catalog
+import com.appautopsy.analysis.core.Playbook
+import com.appautopsy.analysis.model.Lang
 import com.appautopsy.analysis.rules.Rules
 import com.appautopsy.analysis.rules.RulesLoader
 import java.io.File
@@ -23,7 +26,14 @@ object TestData {
         error("could not locate data/ upward from ${File(".").absolutePath}")
     }
 
-    val rules: Rules by lazy {
-        RulesLoader.load { name -> File(dataDir, name).readText() }
+    private fun readData(name: String): String = File(dataDir, name).readText()
+
+    val rules: Rules by lazy { RulesLoader.load(::readData) }
+
+    /** The shipped catalogs, EN/HI/PA, with the English fallback wired up. */
+    val catalogs: Map<Lang, Catalog> by lazy { Catalog.loadAll(::readData) }
+
+    val playbookDefinitions: Map<String, List<Playbook.StepDef>> by lazy {
+        Playbook.loadDefinitions(readData("playbook_en.json"))
     }
 }
