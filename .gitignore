@@ -32,6 +32,15 @@ node_modules/
 dist/
 .vite/
 
+# Android / Gradle
+local.properties
+.gradle/
+build/
+captures/
+.cxx/
+*.iml
+*.hprof
+
 # OS / editor
 .DS_Store
 Thumbs.db

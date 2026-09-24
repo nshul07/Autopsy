@@ -55,7 +55,6 @@
 
   "perm.expected": "{permission_label} एक {category} ऐप के लिए यह सामान्य है।",
   "perm.unexpected": "{permission_label} एक {category} ऐप को आमतौर पर इसकी ज़रूरत नहीं होती।",
-  "perm.info": "{permission_label}",
 
   "rule.many_sensitive": "यह ऐप कई अलग-अलग तरह की संवेदनशील अनुमतियाँ मांगता है।",
   "rule.mismatch": "ऐप ऐसी अनुमति मांगता है जो उसके बताए हुए काम से मेल नहीं खाती।",

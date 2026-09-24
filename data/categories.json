@@ -1,0 +1,97 @@
+{
+  "_comment": "Category allowlists. 'keywords' are matched against the app label (confidence medium) then the package name (confidence low). 'expected_groups' are groups that score 0 for this category. 'unknown' disables the mismatch penalty entirely.",
+  "version": 1,
+  "detection_order": ["user", "label_keyword", "package_keyword", "unknown"],
+  "categories": {
+    "flashlight": {
+      "keywords": ["flashlight", "torch", "flash light", "flashlightpro"],
+      "expected_groups": ["camera"]
+    },
+    "calculator": {
+      "keywords": ["calculator", "calc", "calculatorplus"],
+      "expected_groups": []
+    },
+    "wallpaper": {
+      "keywords": ["wallpaper", "theme", "launcher"],
+      "expected_groups": []
+    },
+    "navigation": {
+      "keywords": ["maps", "navigation", "gps", "route", "navigator"],
+      "expected_groups": ["location"]
+    },
+    "video_calling": {
+      "keywords": ["video call", "meet", "zoom", "conference"],
+      "expected_groups": ["camera", "microphone", "contacts"]
+    },
+    "messaging": {
+      "keywords": ["chat", "messenger", "whatsapp", "telegram", "signal"],
+      "expected_groups": ["contacts", "camera", "microphone", "location", "calls"]
+    },
+    "sms_app": {
+      "keywords": ["sms", "messages", "messaging app"],
+      "expected_groups": ["sms", "contacts"]
+    },
+    "dialer": {
+      "keywords": ["dialer", "caller", "phone app", "contacts app"],
+      "expected_groups": ["contacts", "call_log", "calls", "microphone"]
+    },
+    "camera": {
+      "keywords": ["camera", "photo", "selfie", "photography"],
+      "expected_groups": ["camera", "microphone", "location"]
+    },
+    "photo_editor": {
+      "keywords": ["editor", "filter", "collage", "retouch"],
+      "expected_groups": ["camera"]
+    },
+    "music_player": {
+      "keywords": ["music", "player", "mp3", "radio", "podcast"],
+      "expected_groups": []
+    },
+    "browser": {
+      "keywords": ["browser", "web browser", "explorer web"],
+      "expected_groups": ["location", "camera", "microphone"]
+    },
+    "game": {
+      "keywords": ["game", "puzzle", "racing", "ludo", "chess", "arcade"],
+      "expected_groups": []
+    },
+    "payments_upi": {
+      "keywords": ["pay", "upi", "wallet", "bank", "payment", "fintech"],
+      "expected_groups": ["sms", "camera", "location", "contacts"]
+    },
+    "file_manager": {
+      "keywords": ["file manager", "files", "cleaner", "storage"],
+      "expected_groups": ["all_files"]
+    },
+    "screen_recorder": {
+      "keywords": ["screen record", "screen recorder", "recorder"],
+      "expected_groups": ["microphone", "overlay"]
+    },
+    "accessibility_tool": {
+      "keywords": ["accessibility", "screen reader", "assistive"],
+      "expected_groups": ["accessibility", "overlay"]
+    },
+    "food_or_ride": {
+      "keywords": ["food", "delivery", "taxi", "ride", "cab", "courier"],
+      "expected_groups": ["location", "calls"]
+    },
+    "social": {
+      "keywords": ["social", "reels", "shorts", "feed", "community"],
+      "expected_groups": ["camera", "microphone", "contacts", "location"]
+    },
+    "app_store": {
+      "keywords": ["app store", "appstore", "apk store", "market"],
+      "expected_groups": ["install_packages", "all_files"]
+    },
+    "device_management": {
+      "keywords": ["device management", "mdm", "device admin", "enterprise"],
+      "expected_groups": ["device_admin", "install_packages"]
+    },
+    "unknown": {
+      "keywords": [],
+      "expected_groups": [],
+      "mismatch_penalty_disabled": true,
+      "confidence": "low"
+    }
+  }
+}
