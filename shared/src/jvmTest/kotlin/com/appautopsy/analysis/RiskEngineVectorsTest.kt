@@ -66,17 +66,28 @@ class RiskEngineVectorsTest {
 
     /**
      * Vector A: flashlight app asking for sms, contacts, location, accessibility.
-     * 20 + 15 + 8 + 25 = 68, plus the 20 mismatch penalty = 88.
+     *
+     * Group points 20+15+8+25 = 68, plus the 20 mismatch penalty = 88. But
+     * sms+accessibility also fires the critical `otp_stealer` pattern (+15),
+     * exactly as vector F counts its pattern bonuses, taking the raw total to
+     * 103 — which the cap reduces to 100. The spec's original "88" was a
+     * pattern-blind subtotal that contradicted vector F's own method; AGENTS.md
+     * amendment 2026-09-24 fixes it to 100. Red comes from both the band and the
+     * critical override.
      */
     @Test
-    fun `vector A - flashlight with four unexpected groups scores 88`() {
+    fun `vector A - flashlight with four unexpected groups caps at 100`() {
         val result = scoreFor(
             componentApk("sms", "contacts", "location", "accessibility"),
             "flashlight",
         )
 
-        assertEquals(88, result.score, "score for vector A")
-        assertEquals(Verdict.RED, result.verdict, "88 must land in the red band")
+        assertEquals(100, result.score, "88 from groups+mismatch, +15 otp_stealer, capped 100")
+        assertEquals(Verdict.RED, result.verdict, "100 must land in the red band")
+        assertTrue(
+            result.patterns.any { it.id == "otp_stealer" && it.critical },
+            "sms+accessibility must fire critical otp_stealer",
+        )
         assertTrue(result.unexpectedGroups.containsAll(
             setOf("sms", "contacts", "location", "accessibility")
         ))

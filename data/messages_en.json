@@ -55,6 +55,7 @@
 
   "perm.expected": "{permission_label} This is normal for a {category} app.",
   "perm.unexpected": "{permission_label} A {category} app does not normally need this.",
+  "perm.info": "{permission_label}",
 
   "rule.many_sensitive": "This app asks for many different kinds of sensitive access.",
   "rule.mismatch": "The app asks for access that does not fit what it says it does.",

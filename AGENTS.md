@@ -5,6 +5,43 @@
 **Audience:** Any AI coding agent (Claude Code, Cursor, Copilot, Codex, Windsurf) and every human on the team.
 **Status of this file:** This is the **authoritative build spec**. Where it disagrees with `AppAutopsy_Project_Documentation.md`, **this file wins**.
 
+> **AMENDMENT 2026-09-24 — v1 ships as an offline native Android app (Kotlin/Compose), not a web app.**
+>
+> The team decision: the user we are building for receives an APK *on a phone*
+> and will never open a laptop website to check it. v1 therefore runs the whole
+> pipeline **on-device, offline**: Kotlin/Compose app + the pure analysis engine
+> in `shared/` (Kotlin Multiplatform). Rules stay in the same JSON, the same
+> scoring algorithm is ported 1:1 (`shared/src/commonMain/.../core/RiskEngine.kt`
+> ≡ `backend/app/core/risk_engine.py`), and the same test vectors guard both.
+>
+> Consequences for this file (the sections below are already reconciled):
+> - §5 "one scoring implementation" now means **one scoring *algorithm* with
+>   one canonical JSON, mirrored by one pure Kotlin engine**; the Python engine
+>   becomes a reference implementation + test harness, not the shipped product.
+> - §7 the Android app replaces React/Vite as the v1 frontend.
+> - The **link checker and reputation lookups are network features**: on-device
+>   they run only when the user opts in per scan; every analysis of an APK
+>   remains 100% offline, and SSRF rules (§3.2) apply unchanged to the opt-in
+>   fetches. No WhatsApp bot, no server component in v1.
+> - F14 crowd intel + F13 version diff live in the app's **local SQLite**
+>   (same schemas, same `insufficient_data` guard). No cloud, so "people who
+>   scanned this" is honestly labelled *on this device*.
+> - APK parsing uses `PackageManager` archive inspection + a binary-AXML
+>   decoder in `androidMain` (§F2's androguard guidance applies to the Python
+>   reference path only; the cert-extraction and component-scan requirements,
+>   including the dual accessibility signal, are unchanged).
+> - **Vector A (flashlight + sms,contacts,location,accessibility) scores 100**,
+>   not 88: sms+accessibility fires the critical `otp_stealer` pattern (+15) on
+>   top of the 88, and the rules cap 103 → 100 red. The spec's 88 was a
+>   pattern-blind subtotal; the Python suite already accepted [88, 100].
+>   Nothing in §3.4 or §9 points was changed.
+>
+> Everything in **§3 (Non-Negotiable Rules), §9 (rules data) and §12
+> (checklist)** still applies exactly as written, including: parse-only, no
+> auto-download, zip-bomb caps, SSRF guard, `not_checked` honesty, banned
+> strings, reason-key freeze. This amendment changes *where the code runs*,
+> never *what is allowed*.
+
 ---
 
 ## 0. How an agent must use this file
@@ -264,7 +301,7 @@ if category != "unknown" and unexpected:      score += 20   # "mismatch"
 
 | Case | Category | Groups present | Score | Notes |
 |---|---|---|---|---|
-| A | flashlight | sms, contacts, location, accessibility | **88** | 20+15+8+25, +20 mismatch |
+| A | flashlight | sms, contacts, location, accessibility | **100** | 20+15+8+25 +20 mismatch = 88 pattern-blind; +15 `otp_stealer` (critical) = 103 → capped 100, red |
 | B | flashlight | camera | **0** | expected ⇒ 0 |
 | C | navigation | location | **0** | expected ⇒ 0 |
 | D | unknown | sms | **20** | no mismatch penalty; low confidence |
@@ -476,26 +513,46 @@ User forwards link/APK → WhatsApp → webhook → existing pipeline → reply 
 
 ## 5. Architecture and data flow
 
+**v1 (post-amendment 2026-09-24): offline native Android app.** The web layout
+is kept below for the Python reference implementation, which remains the test
+harness and the fallback pitch demo if the build target changes.
+
 ```text
-                 USER
-   uploads APK / pastes link / pastes message / forwards to WhatsApp
+                 USER (on an Android phone, no network required)
+   picks APK / pastes link / pastes message
                               |
                               v
-              FRONTEND (React + Vite + Tailwind)
-              EN / HI / PA UI, voice, QR, playbook
-                              |  REST JSON / multipart
+        ANDROID APP (Kotlin + Jetpack Compose)  —  androidApp/
+        EN / HI / PA UI, voice, QR, playbook — everything client-side
+                              |  in-process calls
                               v
-                   BACKEND (FastAPI)
-      +-----------+----------+-----------+------------+
-      v           v          v           v            v
-  APK          LINK      MESSAGE     WHATSAPP      INTEL
-  PIPELINE     PIPELINE  PIPELINE    BOT           (SQLite)
-                                                  hash_stats
-                                                  package_history
-      \___________ all four share core/risk_engine.py ___________/
+        SHARED ENGINE (Kotlin Multiplatform, PURE)  —  shared/
+      +----------------+-------------+--------------+----------------+
+      v                v             v              v                v
+  APK PIPELINE     LINK PIPELINE  MESSAGE      INTEL (local      CALIBRATION
+  (AXML decode,    (SSRF guard,   CHECKER      SQLite:            + PLAYBOOK
+   cert, groups)    opt-in net)   (F23)        hash_stats,
+                                               package_history)
+      \________ all share core/RiskEngine.kt — one scoring algorithm ________/
+
+   REFERENCE IMPLEMENTATION (not shipped in v1):
+   backend/ FastAPI + core/risk_engine.py — mirrors the Kotlin engine,
+   runs the shared JSON rule vectors, powers pytest + tools/check_i18n.py.
+   Canonical rules live in /data; tools/sync_rules.py mirrors them to
+   backend/app/data and androidApp assets — never hand-edit a copy.
 ```
 
-**The one architectural rule that matters:** there is exactly **one** scoring implementation (`core/risk_engine.py`), exactly **one** set of rules (`data/*.json`), and exactly **one** explanation builder. Web, link, message and bot are thin adapters that normalize input into a `ParsedApk` (or `LinkInput`) and call the shared core. The moment a second scoring path appears, the rules diverge and the results stop being reproducible — which destroys the project's core claim.
+```text
+   (reference / fallback web deployment — pre-amendment layout)
+                 USER uploads APK / pastes link (browser)
+                              v
+              FRONTEND (React + Vite + Tailwind)
+                              v  REST JSON / multipart
+                   BACKEND (FastAPI) → APK/LINK/MESSAGE pipelines + INTEL
+      \___________ all share core/risk_engine.py ___________/
+```
+
+**The one architectural rule that matters:** there is exactly **one scoring algorithm**, expressed once per runtime (Kotlin `shared/core/RiskEngine.kt` ≡ Python `backend/app/core/risk_engine.py`), driven by **one canonical set of rules** (`/data/*.json`, mirrored by `tools/sync_rules.py --check`), with **one explanation builder**. The two implementations are kept equal by the shared test vectors — if a vector fails in either language, the rule change is wrong until both agree. The moment a *third* scoring path appears, or a rules file is hand-edited on one side, results stop being reproducible — which destroys the project's core claim.
 
 **APK pipeline:**
 ```
@@ -675,9 +732,16 @@ appautopsy/
 
 ## 7. Tech stack
 
+**v1 (native) rows first; Python rows remain true for the reference implementation.**
+
 | Layer | Choice | Notes |
 |---|---|---|
-| Backend | Python 3.11+, FastAPI, Uvicorn | Auto OpenAPI docs at `/docs` — useful in the pitch |
+| App (v1) | Kotlin + Jetpack Compose, Material 3, minSdk 24 / targetSdk 35 | `androidApp/` — offline, mobile-first, no server |
+| Shared engine (v1) | Kotlin Multiplatform (`shared/`), kotlinx-serialization | Pure scoring; JVM tests run the exact same vectors as pytest |
+| APK parsing (v1) | `java.util.zip.ZipFile` named members + `PackageManager.getPackageArchiveInfo` (certs) + own binary-AXML decoder | Read-only; same size caps as §3.1; cert path wrapped → `not_checked` |
+| Storage (v1) | SQLite WAL in-app (`intel.db` schema identical to §F13/F14); reports in memory | No cloud |
+| Network (v1, optional) | `HttpURLConnection`/OkHttp manual redirects for link check only, per user opt-in | §3.2 SSRF rules unchanged |
+| Reference backend | Python 3.11+, FastAPI, Uvicorn | Auto OpenAPI docs at `/docs` — useful in the pitch |
 | APK parsing | androguard 4.x (**manifest-only path**) | See F2 — do not touch the DEX analyzer on the hot path |
 | AXML fallback | AXMLPrinter / pyaxmlparser / apkutils2 | Binary decoder — **not** "raw XML" |
 | HTTP | httpx | Explicit timeouts, manual redirect handling for SSRF |
