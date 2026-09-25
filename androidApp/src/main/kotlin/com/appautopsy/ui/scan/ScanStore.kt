@@ -8,9 +8,12 @@ import org.json.JSONObject
 /**
  * Scan history + counters, kept on-device in SharedPreferences.
  *
- * Privacy contract: only the verdict, score, source and a timestamp per
- * record are stored — never the message text, never the full URL. That is
- * the same rule the backend store follows, enforced here at rest.
+ * Privacy contract: only the verdict, score, source, a timestamp and an
+ * optional one-word label per record are stored — never the message text,
+ * never the full URL. The label is the *host* of a scanned link
+ * (microsoft-secure-login.xyz), which the warning notification already shows;
+ * message scans store no label at all. That is the same rule the backend
+ * store follows, enforced here at rest.
  */
 object ScanStore {
 
@@ -21,13 +24,21 @@ object ScanStore {
         val score: Int,
         val source: Source,
         val atMillis: Long,
+        val label: String? = null,
     )
 
     private const val PREFS = "scan_history"
     private const val KEY = "records"
     private const val MAX_RECORDS = 200
 
-    fun record(context: Context, verdict: Verdict?, score: Int, source: Source, atMillis: Long = System.currentTimeMillis()) {
+    fun record(
+        context: Context,
+        verdict: Verdict?,
+        score: Int,
+        source: Source,
+        atMillis: Long = System.currentTimeMillis(),
+        label: String? = null,
+    ) {
         val v = verdict ?: return
         runCatching {
             val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
@@ -37,6 +48,7 @@ object ScanStore {
                 .put("s", score)
                 .put("src", source.name)
                 .put("t", atMillis)
+            if (label != null) rec.put("l", label)
             arr.put(0, rec) // newest first
             while (arr.length() > MAX_RECORDS) arr.remove(arr.length() - 1)
             prefs.edit().putString(KEY, arr.toString()).apply()
@@ -52,6 +64,7 @@ object ScanStore {
                     score = o.getInt("s"),
                     source = runCatching { Source.valueOf(o.getString("src")) }.getOrDefault(Source.MANUAL),
                     atMillis = o.getLong("t"),
+                    label = o.optString("l").takeIf { it.isNotBlank() },
                 )
             } }
 
