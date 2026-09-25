@@ -8,6 +8,7 @@ analysis. This module resolves those keys to text for the API response.
 from __future__ import annotations
 
 import json
+import re
 from dataclasses import dataclass
 from functools import lru_cache
 
@@ -17,6 +18,33 @@ from app.models.schemas import Lang
 SUPPORTED_LANGS: tuple[Lang, ...] = ("en", "hi", "pa")
 DEFAULT_LANG: Lang = "en"
 PLAYBOOK_PREFIX = "playbook."
+
+# `{param}`, matched literally. Deliberately NOT `str.format`: report text is
+# attacker-influenced ({decoded}, {brand}, {tld}, {keyword} all come from the
+# URL under analysis) and `str.format` parses a whole format mini-language over
+# whatever it is handed — attribute access, indexing, format specs. A literal
+# scan-and-substitute cannot interpret any of that, so a param value of
+# `{0.__class__}` or `{decoded:*^40}` comes out verbatim. This mirrors
+# Catalog.text in shared/.../catalog/Catalog.kt, which is the canonical
+# implementation; keep the two in step.
+_PARAM_RE = re.compile(r"\{([A-Za-z_][A-Za-z0-9_]*)\}")
+
+
+def interpolate(template: str, params: dict[str, object]) -> str:
+    """Substitute ``{name}`` placeholders, leaving unknown ones visible.
+
+    A placeholder with no matching param stays in the output on purpose: a
+    visibly broken sentence is a content bug someone will report, whereas a
+    silently blanked one is a bug nobody notices.
+    """
+    if not params:
+        return template
+
+    def _sub(match: re.Match[str]) -> str:
+        name = match.group(1)
+        return str(params[name]) if name in params else match.group(0)
+
+    return _PARAM_RE.sub(_sub, template)
 
 
 @dataclass(frozen=True)
@@ -41,13 +69,9 @@ class Catalog:
             template = get_catalog(DEFAULT_LANG).get(key)
         if template is None:
             return key
-        if not params:
-            return template
-        try:
-            return template.format(**params)
-        except (KeyError, IndexError):
-            # A malformed template is a content bug, not a runtime failure.
-            return template
+        # A malformed template is a content bug, not a runtime failure, so this
+        # never raises — see interpolate() for why it is not str.format.
+        return interpolate(template, params)
 
 
 def _load(path_name: str) -> dict:

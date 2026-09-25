@@ -79,7 +79,13 @@ class Pattern:
 class Brand:
     name: str
     aliases: tuple[str, ...]
-    official_domains: frozenset[str]
+    # A tuple, not a set: the brand look-alike engine mirrors the Kotlin
+    # engine's ``official.firstOrNull()``, which is only meaningful in
+    # declaration order. As a frozenset that call became ``next(iter(...))``
+    # and picked a hash-random domain per process — measured cost was
+    # ``olive.com`` matching Microsoft, because whichever domain came out
+    # could be live.com and "live" sits inside "olive".
+    official_domains: tuple[str, ...]
     official_packages: frozenset[str]
     official_cert_sha256: frozenset[str]
 
@@ -178,7 +184,7 @@ def _build_brands(raw_brands: list) -> tuple[tuple[Brand, ...], dict[str, str]]:
         brand = Brand(
             name=spec["brand"],
             aliases=tuple(alias.lower() for alias in spec.get("aliases", [])),
-            official_domains=frozenset(
+            official_domains=tuple(
                 domain.lower() for domain in spec.get("official_domains", [])
             ),
             official_packages=frozenset(

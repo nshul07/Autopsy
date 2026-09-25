@@ -8,7 +8,7 @@ def test_repackaging_signer_mismatch() -> None:
     brand = Brand(
         name="SampleBank",
         aliases=("samplebank",),
-        official_domains=frozenset({"samplebank.com"}),
+        official_domains=("samplebank.com",),
         official_packages=frozenset({"com.samplebank.app"}),
         official_cert_sha256=frozenset({"1122334455667788"}),
     )

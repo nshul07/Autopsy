@@ -47,8 +47,28 @@ async def check_link(
     score = min(raw_score, 100)
     band_def = band_for(score, rules)
 
-    critical_triggered = any(
-        c.status == "flagged" and c.id == "reputation_flagged" for c in checks
+    # A punycode host that matches a brand (xn--pple-43d.com) is a homoglyph
+    # spoof by construction — no legitimate site registers those. Same for a
+    # strong brand match (the brand's own word on someone else's domain, a
+    # typo-squat, a brand buried in a lured-up domain): 35 points alone would
+    # only warn, and a warning is the wrong answer for a link impersonating a
+    # bank. Mirrors LinkScorer.kt — keep the two in step.
+    flagged_ids = {c.id for c in checks if c.status == "flagged"}
+    homoglyph_spoof = "punycode" in flagged_ids and "brand_lookalike" in flagged_ids
+    strong_brand = any(
+        c.id == "brand_lookalike"
+        and c.status == "flagged"
+        and c.params.get("strong") == "1"
+        for c in checks
+    )
+    critical_triggered = (
+        homoglyph_spoof
+        or strong_brand
+        or any(
+            c.status == "flagged"
+            and (rules.link_rules.get("checks", {}).get(c.id, {}) or {}).get("critical")
+            for c in checks
+        )
     )
 
     verdict = band_def.verdict
