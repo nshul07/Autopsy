@@ -69,6 +69,7 @@
   "link.no_https": "This link is not secure (no HTTPS).",
   "link.deep_subdomains": "This link's address has an unusually long chain of prefixes.",
   "link.scam_keywords": "This link's address contains a word commonly used in scams ({keyword}).",
+  "link.phish_path": "This link points into a website's internal folders and asks for sign-in details. That combination is how compromised sites are made to host fake login pages.",
   "link.shortener": "This link is shortened, so its real destination is hidden.",
   "link.downgrade_redirect": "This link redirects to a less secure address.",
   "link.reputation_flagged": "This link has been flagged as dangerous by an external service.",
@@ -159,5 +160,9 @@
   "ui.perm_mail_why": "Reads the preview line of new mail to spot phishing. It never opens the mail.",
   "ui.perm_granted": "On",
   "ui.perm_open_settings": "Open system settings",
+  "ui.perm_browser": "Set as your browser",
+  "ui.perm_browser_why": "Links you tap in other apps go straight to Chrome and never reach us. Make AppAutopsy your browser once and every tap is checked first — clean links still open as normal.",
+  "ui.perm_browser_on": "On. Link taps are checked.",
+  "ui.perm_browser_unavailable": "Not offered on this Android version.",
   "ui.perm_denied_hint": "Denied — you can still enable it in system settings."
 }

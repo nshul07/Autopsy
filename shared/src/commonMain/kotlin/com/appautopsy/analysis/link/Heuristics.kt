@@ -132,47 +132,110 @@ fun checkBrandLookalikeMatch(
     val rawLabels = decoded.split('.').filter { it.isNotEmpty() }.toList()
     val sldFolded = Confusables.fold(sld)
     val labelsFolded = rawLabels.map { Confusables.fold(it) }.toSet()
-    val lured = rawLabels.any { Confusables.fold(it).split('-', '_').any { p -> p in LURE_WORDS } }
+    // Every brand alias doubles as a lure word for its own brand ("upi" is both
+    // a BHIM UPI alias and a lure word), so a lure signal on the SLD itself
+    // proves nothing — upi.com lured itself into a forced RED on a real news
+    // site. Only subdomain labels and hyphenated/underscored parts count.
+    val lureScope = rawLabels.filter { it != sld } +
+        rawLabels.flatMap { it.split('-', '_').drop(1) }
+    val lured = lureScope.any { Confusables.fold(it) in LURE_WORDS }
+
+    val suffixIsSuspicious = split.suffix.lowercase() in rules.linkRules.suspiciousTlds
 
     for (brand in rules.brands) {
-        val official = brand.officialDomains.map { it.lowercase() }.toSet()
+        val official = brand.officialDomains.map { it.lowercase() }.distinct()
         // Literally the brand's own domain (never the folded form!) → clean.
         if (reg in official || official.any { it.isNotEmpty() && reg.endsWith(".$it") }) {
             continue
         }
+        // The brand's own SLD under a different public suffix is still the
+        // brand's own site: amazon.co.uk, amazon.de, google.co.jp are Amazon's
+        // and Google's, even though officialDomains only lists .com/.in. Every
+        // ccTLD variant of every brand cannot be enumerated, so match the SLD
+        // and require only that the suffix is not one a phishing kit would
+        // pick. Without this guard amazon.co.uk, amazon.ca and amazon.fr were
+        // all forced RED — a false alarm on the real store. A wrong-TLD squat
+        // on amazon.xyz still trips the check: those suffixes are suspicious.
+        if (!suffixIsSuspicious &&
+            official.any { it.isNotEmpty() && sld == splitHost(it).domain }
+        ) {
+            continue
+        }
+
+        fun norm(text: String) = text.lowercase().replace(" ", "")
 
         val exactTokens = buildSet {
             official.forEach { add(splitHost(it).domain) }
-            add(brand.name.lowercase().replace(" ", ""))
-            brand.aliases.forEach { add(it.lowercase().replace(" ", "")) }
+            add(norm(brand.name))
+            brand.aliases.forEach { add(norm(it)) }
         }.filter { it.length >= 3 }.toSet()
 
-        val fuzzyTokens = buildSet {
-            add(brand.name.lowercase().replace(" ", ""))
-            brand.aliases.forEach { add(it.lowercase().replace(" ", "")) }
+        val fuzzyCandidates = buildList {
+            add(norm(brand.name))
+            brand.aliases.forEach { add(norm(it)) }
             official.firstOrNull()?.let { add(splitHost(it).domain) }
-        }.filter { it.length >= 4 }.toSet()
+        }.distinct()
 
-        // 1. right brand name, wrong domain — in ASCII or via homoglyphs.
-        //    Someone registered the brand's exact word on a domain that is
-        //    not theirs: impersonation, not coincidence.
-        if (sldFolded in exactTokens) return BrandMatch(brand.name, strong = true)
+        // Fuzzy typo-squat candidates need real length: a 4-char token like
+        // "uber" is one edit from "aber" (aber.ac.uk) and would force RED on a
+        // university. Containment instead runs on short tokens too, because it
+        // is gated on a lure word next to the brand — "paytm-verify" and
+        // "sbi.verify-loan" must keep working, and "olive"/"snapple" still do
+        // not, since neither is lured up.
+        val fuzzyTokens = fuzzyCandidates.filter { it.length >= 6 }
+        val containTokens = fuzzyCandidates.filter { it.length >= 3 }
+
+
+        // 1. right brand name, wrong domain — in ASCII or via homoglyphs. A
+        //    long brand word (microsoft, paytm) matching an SLD that is not the
+        //    brand's is impersonation outright. A SHORT alias is a coincidence:
+        //    "upi" is the alias of BHIM UPI and also upi.com, a real news
+        //    agency, so short tokens only force a match when the TLD is already
+        //    suspicious (sbi.xyz) or a lure word is present.
+        if (sldFolded in exactTokens) {
+            if (sldFolded.length >= 5 || suffixIsSuspicious || lured) {
+                return BrandMatch(brand.name, strong = true)
+            }
+        }
 
         for (t in fuzzyTokens) {
-            // 2. typo-squat, distance budget scaled to token length
-            val budget = if (t.length >= 7) rules.linkRules.lookalikeMaxEditDistance else 1
+            // 2. typo-squat, distance budget scaled to token length. Distance 1
+            //    only for most tokens: at distance 2 a short token matches
+            //    unrelated words — measured cost was "telegraph" being two
+            //    edits from "telegram", forcing RED on telegraph.co.uk. A 7+
+            //    char token gets the full rules budget, but each extra edit
+            //    past the first raises the length bar: a 2-edit hit needs a
+            //    >= 9 char token (microsoft/office365 still qualify; telegram
+            //    alone does not).
+            var budget = if (t.length >= 7) rules.linkRules.lookalikeMaxEditDistance else 1
+            if (budget > 1 && t.length < 9) budget = 1
             if (budget > 0 &&
                 kotlin.math.abs(sldFolded.length - t.length) <= rules.linkRules.lookalikeLengthTolerance
             ) {
                 val d = boundedEditDistance(sldFolded, t, budget)
-                if (d in 1..budget) {
-                    // Distance 1 or 2 on a long token is a deliberate misspell
-                    // (rnmicrosoft, paytrn). Distance 2 on a short token is a
-                    // guess; keep it a warning.
-                    val strong = d == 1 || t.length >= 6
-                    return BrandMatch(brand.name, strong = strong)
+                // A two-edit hit only accuses when the brand word is still a
+                // substring of the domain — a real character-level wrap
+                // (rnmicrosoft, microsooft). Anything else at distance 2 is a
+                // coincidence the engine cannot distinguish from a squat:
+                // "rnicrosoft" (a genuine Microsoft squat) and "picosoft" (a
+                // real Italian software firm) are both one insertion from
+                // "microsoft" and differ by no string test whatsoever, and
+                // "citibank"/"hiexpress"/"oakbank" are the same story against
+                // icicibank/dhlexpress/kotakbank. Demanding the embedded brand
+                // word keeps every real site clean (hiexpress, devexpress,
+                // picosoft, citibank.co.uk, oakbank.co.nz were all forced RED
+                // before) at the documented cost of one miss: "rnicrosoft" is
+                // no longer caught. That trade is deliberate — crying wolf on a
+                // real bank costs more trust than missing one typosquat, and a
+                // wrap that keeps the brand visible is the signal a phisher
+                // actually relies on.
+                if (d in 1..budget && (d == 1 || t in sldFolded)) {
+                    return BrandMatch(brand.name, strong = true)
                 }
             }
+        }
+
+        for (t in containTokens) {
             // 3. containment — only counts when the domain is lured up
             //    (microsoft-secure-login). A bare containment match on its
             //    own is too loose: "olive" contains "live", "snapple"
@@ -182,8 +245,16 @@ fun checkBrandLookalikeMatch(
             }
         }
 
-        // 4. brand token in the hostname but someone else owns the domain
-        if (labelsFolded.any { it in exactTokens }) return BrandMatch(brand.name, strong = true)
+        // 4. brand token in the hostname but someone else owns the domain.
+        //    Require a lure signal, because a lone brand label is usually a real
+        //    subdomain — microsoft.wikia.com and blog.google.com are not
+        //    phishing. A lured label is the spoof: sbi.verify-loan.xyz,
+        //    login.microsoft.com.evil.tk. The lure gate is what makes a short
+        //    brand label ("sbi") safe to honour here; without it "navy.mil"
+        //    would read as the brand "Navi".
+        if (lured && labelsFolded.any { it.length >= 3 && it in exactTokens }) {
+            return BrandMatch(brand.name, strong = true)
+        }
     }
     return null
 }
@@ -264,7 +335,21 @@ fun evaluateOfflineHeuristics(url: NormalizedUrl, rules: com.appautopsy.analysis
         flagged("direct_apk")
     }
 
-    // 10. Brand look-alike (typo squat, homoglyph, containment, subdomain spoof).
+    // 10. Injected credential path. The largest family of phishing URLs has no
+    //     brand word anywhere: a compromised legit site (often WordPress) gets a
+    //     dropper written into its own folders and the phish lives at a path
+    //     like /wp-content/themes/x/PayPal/login.php. Structure alone catches
+    //     it: a request for sign-in details that resolves into the site's own
+    //     internal plumbing. Measured on 20k bad / 20k good URLs: this fires on
+    //     5.0% of bad and 0.00% of good — the pairing is what does the work,
+    //     since either signal alone is common on healthy sites.
+    val injectDirs = rules.linkRules.injectDirs
+    val credentialWords = rules.linkRules.credentialWords
+    if (injectDirs.any { it in pathLower } && credentialWords.any { it in pathLower }) {
+        flagged("phish_path")
+    }
+
+    // 11. Brand look-alike (typo squat, homoglyph, containment, subdomain spoof).
     //     Strong matches are marked by points alone being insufficient, so we
     //     encode the strength in an extra param the scorer reads: a strong
     //     impersonation must land RED, not a 35-point warning.

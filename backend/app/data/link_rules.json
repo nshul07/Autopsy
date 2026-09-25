@@ -2,23 +2,117 @@
   "_comment": "Link checker heuristics and weights. Offline checks first (no network), then SSRF-guarded redirect expansion, then optional reputation providers.",
   "version": 1,
   "checks": {
-    "direct_apk":       { "points": 30, "critical": false, "reason_key": "link.direct_apk" },
-    "brand_lookalike":  { "points": 35, "critical": false, "reason_key": "link.brand_lookalike" },
-    "ip_host":          { "points": 25, "critical": false, "reason_key": "link.ip_host" },
-    "punycode":         { "points": 20, "critical": false, "reason_key": "link.punycode" },
-    "at_symbol":        { "points": 15, "critical": false, "reason_key": "link.at_symbol" },
-    "suspicious_tld":   { "points": 10, "critical": false, "reason_key": "link.suspicious_tld" },
-    "no_https":         { "points": 10, "critical": false, "reason_key": "link.no_https" },
-    "deep_subdomains":  { "points": 10, "critical": false, "reason_key": "link.deep_subdomains" },
-    "scam_keywords":    { "points": 10, "max_points": 20, "critical": false, "reason_key": "link.scam_keywords" },
-    "shortener":        { "points": 5,  "critical": false, "reason_key": "link.shortener" },
-    "downgrade_redirect": { "points": 15, "critical": false, "reason_key": "link.downgrade_redirect" },
-    "reputation_flagged": { "points": 60, "critical": true,  "reason_key": "link.reputation_flagged" }
+    "direct_apk": {
+      "points": 30,
+      "critical": false,
+      "reason_key": "link.direct_apk"
+    },
+    "brand_lookalike": {
+      "points": 35,
+      "critical": false,
+      "reason_key": "link.brand_lookalike"
+    },
+    "ip_host": {
+      "points": 25,
+      "critical": false,
+      "reason_key": "link.ip_host"
+    },
+    "punycode": {
+      "points": 20,
+      "critical": false,
+      "reason_key": "link.punycode"
+    },
+    "at_symbol": {
+      "points": 15,
+      "critical": false,
+      "reason_key": "link.at_symbol"
+    },
+    "suspicious_tld": {
+      "points": 10,
+      "critical": false,
+      "reason_key": "link.suspicious_tld"
+    },
+    "no_https": {
+      "points": 10,
+      "critical": false,
+      "reason_key": "link.no_https"
+    },
+    "deep_subdomains": {
+      "points": 10,
+      "critical": false,
+      "reason_key": "link.deep_subdomains"
+    },
+    "scam_keywords": {
+      "points": 10,
+      "max_points": 20,
+      "critical": false,
+      "reason_key": "link.scam_keywords"
+    },
+    "phish_path": {
+      "points": 30,
+      "critical": false,
+      "reason_key": "link.phish_path"
+    },
+    "shortener": {
+      "points": 5,
+      "critical": false,
+      "reason_key": "link.shortener"
+    },
+    "downgrade_redirect": {
+      "points": 15,
+      "critical": false,
+      "reason_key": "link.downgrade_redirect"
+    },
+    "reputation_flagged": {
+      "points": 60,
+      "critical": true,
+      "reason_key": "link.reputation_flagged"
+    }
   },
-  "suspicious_tlds": ["xyz", "top", "click", "icu", "work", "gq", "tk", "ml", "cf", "buzz", "rest", "monster"],
-  "scam_keywords": ["kyc", "reward", "claim", "verify", "update", "gift", "free", "mod", "lucky", "winner", "offer", "cashback"],
-  "known_shorteners": ["bit.ly", "tinyurl.com", "goo.gl", "t.co", "is.gd", "cutt.ly", "rb.gy", "shorturl.at", "rebrand.ly"],
-  "apk_extensions": [".apk", ".xapk", ".apks"],
+  "suspicious_tlds": [
+    "xyz",
+    "top",
+    "click",
+    "icu",
+    "work",
+    "gq",
+    "tk",
+    "ml",
+    "cf",
+    "buzz",
+    "rest",
+    "monster"
+  ],
+  "scam_keywords": [
+    "kyc",
+    "reward",
+    "claim",
+    "verify",
+    "update",
+    "gift",
+    "free",
+    "mod",
+    "lucky",
+    "winner",
+    "offer",
+    "cashback"
+  ],
+  "known_shorteners": [
+    "bit.ly",
+    "tinyurl.com",
+    "goo.gl",
+    "t.co",
+    "is.gd",
+    "cutt.ly",
+    "rb.gy",
+    "shorturl.at",
+    "rebrand.ly"
+  ],
+  "apk_extensions": [
+    ".apk",
+    ".xapk",
+    ".apks"
+  ],
   "apk_content_types": [
     "application/vnd.android.package-archive",
     "application/octet-stream"
@@ -29,7 +123,41 @@
     "max_hops": 5,
     "timeout_seconds": 5.0,
     "max_header_bytes": 65536,
-    "allowed_ports": [80, 443],
+    "allowed_ports": [
+      80,
+      443
+    ],
     "user_agent": "AppAutopsy-LinkChecker/1.0"
-  }
+  },
+  "inject_dirs": [
+    "wp-content",
+    "wp-admin",
+    "wp-includes",
+    "/components/",
+    "/system/",
+    "/images/",
+    "/tmp/",
+    "/cache/",
+    "/css/",
+    "/js/",
+    "/modules/",
+    "/themes/",
+    "/plugins/",
+    "/addons/",
+    "/language/"
+  ],
+  "credential_words": [
+    "webscr",
+    "signin",
+    "logon",
+    "login",
+    "verification",
+    "verify",
+    "credential",
+    "password",
+    "passwd",
+    "account",
+    "secure",
+    "confirm"
+  ]
 }

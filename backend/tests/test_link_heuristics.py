@@ -75,9 +75,39 @@ def test_punycode_decoder_round_trips() -> None:
 # ---- brand look-alike: the four signals -------------------------------------
 
 
-def test_typo_squat_matches_the_brand() -> None:
+def test_typo_squat_that_keeps_the_brand_visible_matches() -> None:
     matched, brand, strong = check_brand_lookalike("rnmicrosoft.com", _rules())
     assert matched and brand == "Microsoft" and strong
+
+
+def test_two_edit_near_miss_does_not_accuse_a_real_business() -> None:
+    """Every host here is exactly two edits from a brand token, and every one
+    is a real business that a permissive distance check forced RED before:
+    hiexpress/devexpress (dhlexpress), picosoft (microsoft), citibank.co.uk
+    (icicibank), oakbank.co.nz (kotakbank). "picosoft" is string-
+    indistinguishable from the genuine squat "rnicrosoft", so the engine stops
+    drawing that line and demands the brand word stay visible inside the domain.
+    """
+    for host in (
+        "www.hiexpress.com",
+        "www.devexpress.com",
+        "www.picosoft.it",
+        "www.citibank.co.uk",
+        "oakbank.co.nz",
+    ):
+        assert check_brand_lookalike_match(host, _rules()) is None, host
+
+
+def test_two_edit_squat_without_the_embedded_brand_word_is_a_known_miss() -> None:
+    """The documented cost of the rule above. "rnicrosoft" is r+nicrosoft — a
+    real Microsoft squat — but it does not CONTAIN "microsoft", so it is not
+    caught. Asserted so the miss is visible rather than surprising: if this ever
+    starts matching, the policy changed and this test is the record of it.
+    """
+    assert check_brand_lookalike_match("rnicrosoft.com", _rules()) is None
+    # The one that does keep the brand visible is still caught.
+    assert check_brand_lookalike_match("rnmicrosoft.com", _rules()) is not None
+    assert check_brand_lookalike_match("microsooft.com", _rules()) is not None
 
 
 def test_brand_token_buried_in_a_lure_is_flagged() -> None:
@@ -113,6 +143,8 @@ def test_official_brand_domains_stay_clean() -> None:
 
 PHISHING = [
     "http://xn--pple-43d.com/",
+    # rnmicrosoft, not rnicrosoft: a two-edit squat is only accused when the
+    # brand word is still inside the domain (see the known-miss test above).
     "https://rnmicrosoft.com/signin",
     "https://microsoft-secure-login.xyz",
     "https://sbi.verify-loan.xyz/ok",

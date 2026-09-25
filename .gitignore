@@ -17,6 +17,10 @@ intel.db
 intel.db-wal
 intel.db-shm
 
+# Benchmark scratch — the corpus and sweep output are large and regenerable.
+# The harness itself (tools/bench_phishing.py) IS committed; only its data is not.
+.bench/
+
 # Python
 __pycache__/
 *.py[cod]

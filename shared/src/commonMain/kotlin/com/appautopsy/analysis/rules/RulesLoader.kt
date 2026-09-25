@@ -121,6 +121,8 @@ object RulesLoader {
             apkExtensions = raw["apk_extensions"].stringList(),
             lookalikeMaxEditDistance = raw["lookalike_max_edit_distance"]!!.jsonPrimitive.content.toInt(),
             lookalikeLengthTolerance = raw["lookalike_length_tolerance"]!!.jsonPrimitive.content.toInt(),
+            injectDirs = raw["inject_dirs"].stringList(),
+            credentialWords = raw["credential_words"].stringList(),
         )
     }
 

@@ -51,6 +51,13 @@ data class LinkRules(
     val apkExtensions: List<String>,
     val lookalikeMaxEditDistance: Int,
     val lookalikeLengthTolerance: Int,
+    /**
+     * Injected-credential-path signals: a folder name that belongs to a site's
+     * own plumbing, paired with a word asking for sign-in details. Either alone
+     * is common on healthy sites; the pair is the phish.
+     */
+    val injectDirs: List<String>,
+    val credentialWords: List<String>,
 )
 
 data class LinkCheckDef(

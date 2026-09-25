@@ -53,12 +53,27 @@ class LinkDetectionTest {
     }
 
     @Test
-    fun `typo squat rnicrosoft is flagged as Microsoft`() {
-        assertEquals("Microsoft", checkBrandLookalike("rnicrosoft.com", rules))
+    fun `typo squat that keeps the brand visible is flagged as Microsoft`() {
+        // A two-edit squat is only accused when the brand word is still a
+        // substring of the domain — see the documented miss below.
+        assertEquals("Microsoft", checkBrandLookalike("rnmicrosoft.com", rules))
+        assertEquals("Microsoft", checkBrandLookalike("microsooft.com", rules))
+    }
+
+    @Test
+    fun `two-edit near miss of a real business is a documented miss`() {
+        // "rnicrosoft" is a genuine Microsoft squat (one insertion of "n") but
+        // does NOT contain "microsoft". "picosoft", a real Italian software
+        // firm, is string-indistinguishable from it, so no distance-2 test can
+        // keep one and drop the other. The engine demands the embedded brand
+        // word and accepts the miss; this test is the record of that trade.
+        assertNull(checkBrandLookalike("rnicrosoft.com", rules))
+        assertNotNull(checkBrandLookalike("rnmicrosoft.com", rules))
     }
 
     @Test
     fun `impersonation links land RED not yellow`() {
+        // rnmicrosoft, not rnicrosoft — see the two-edit miss test below.
         // The 35-point brand check alone would only warn. Every one of these
         // is impersonation by construction, so the scorer must force RED.
         for (url in listOf(
@@ -108,6 +123,64 @@ class LinkDetectionTest {
         assertNull(checkBrandLookalike("olive.com", rules))
         // t.me IS Telegram's official domain.
         assertNull(checkBrandLookalike("t.me/foo", rules))
+    }
+
+    @Test
+    fun `ccTLD variants of a brand are its own site, not a squat`() {
+        // Measured before the SLD guard existed: amazon.co.uk, amazon.ca and
+        // amazon.fr were all forced RED. A wrong-TLD squat on a suspicious
+        // suffix must still trip the check.
+        for (host in listOf(
+            "www.amazon.co.uk",
+            "www.amazon.ca",
+            "www.amazon.fr",
+            "www.google.co.jp",
+        )) {
+            assertNull(checkBrandLookalike(host, rules), "must stay clean: $host")
+        }
+        assertEquals("Amazon", checkBrandLookalike("amazon.xyz", rules))
+    }
+
+    @Test
+    fun `short alias SLD without a lure or bad TLD stays clean`() {
+        // "upi" is the BHIM UPI alias and also upi.com, a real news agency.
+        // It is also a lure word, so it must not lure itself.
+        assertNull(checkBrandLookalike("upi.com/story", rules))
+    }
+
+    @Test
+    fun `two-edit near miss of a real site is not a spoof`() {
+        // These are all exactly two edits from a brand token but do NOT contain
+        // it. Measured before the containment gate: every one of them was a
+        // forced RED on a real site — hiexpress/devexpress (dhlexpress),
+        // picosoft (microsoft), citibank.co.uk (icicibank), oakbank.co.nz
+        // (kotakbank). A shared-character-run test does not separate these,
+        // because "hiexpress" and "dhlexpress" genuinely share "express".
+        for (host in listOf(
+            "www.hiexpress.com",
+            "www.devexpress.com",
+            "www.picosoft.it",
+            "www.citibank.co.uk",
+            "oakbank.co.nz",
+        )) {
+            assertNull(checkBrandLookalike(host, rules), "must stay clean: $host")
+        }
+    }
+
+    @Test
+    fun `unlured brand label in a subdomain is not a spoof`() {
+        // A lone brand label is usually a real subdomain.
+        assertNull(checkBrandLookalike("microsoft.wikia.com", rules))
+        assertNull(checkBrandLookalike("blog.google.com", rules))
+    }
+
+    @Test
+    fun `injected credential path is flagged`() {
+        val ids = flaggedIds("https://newsite.com/wp-content/themes/x/PayPal/login.php")
+        assertTrue("phish_path" in ids, "expected phish_path: $ids")
+        // Either signal alone is common on healthy sites, so neither fires.
+        assertTrue("phish_path" !in flaggedIds("https://wordpress.org/wp-content/uploads/2024/pic.jpg"))
+        assertTrue("phish_path" !in flaggedIds("https://example.com/login"))
     }
 
     @Test
