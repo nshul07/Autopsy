@@ -122,6 +122,21 @@ object LinkHandoff {
         return rm.createRequestRoleIntent(RoleManager.ROLE_BROWSER)
     }
 
+    /**
+     * Whether this device could ever hand us the browser role.
+     *
+     * Distinct from [browserRoleIntent] returning null, which means *either*
+     * "already held" or "not offered" — a UI that cannot tell those apart
+     * shows "set as browser" to someone who already did, or hides the row on a
+     * device where it would have worked. Below API 29 there is no role API at
+     * all, so this is false and the row is hidden rather than dead.
+     */
+    fun isBrowserRoleAvailable(context: Context): Boolean {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) return false
+        val rm = context.getSystemService(RoleManager::class.java) ?: return false
+        return rm.isRoleAvailable(RoleManager.ROLE_BROWSER)
+    }
+
     fun holdsBrowserRole(context: Context): Boolean {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) return false
         val rm = context.getSystemService(RoleManager::class.java) ?: return false

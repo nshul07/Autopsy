@@ -30,6 +30,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import com.appautopsy.analysis.catalog.Catalog
+import com.appautopsy.ui.scan.LinkHandoff
 import com.appautopsy.watch.MailNotificationListener
 
 /**
@@ -59,6 +60,22 @@ fun PermissionsCard(catalog: Catalog, modifier: Modifier = Modifier) {
         Build.VERSION.SDK_INT < 33 || context.hasPermission(Manifest.permission.POST_NOTIFICATIONS)
     }
     val mail = remember(tick) { context.hasMailAccess() }
+    // The browser role is the one that decides whether a tapped link reaches us
+    // at all. It is not a runtime permission — no dialog exists — so it is read
+    // from RoleManager and requested through the system role intent.
+    val browserOffered = remember(tick) { LinkHandoff.isBrowserRoleAvailable(context) }
+    val browser = remember(tick) { LinkHandoff.holdsBrowserRole(context) }
+
+    val roleLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.StartActivityForResult(),
+    ) {
+        // A role request can come back RESULT_CANCELED even when the role was
+        // granted, so the result code is not evidence. Re-read the real state.
+        tick++
+        if (!LinkHandoff.holdsBrowserRole(context)) {
+            toast(context, catalog.text("ui.perm_denied_hint"))
+        }
+    }
 
     val smsLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission(),
@@ -70,7 +87,7 @@ fun PermissionsCard(catalog: Catalog, modifier: Modifier = Modifier) {
         ActivityResultContracts.RequestPermission(),
     ) { tick++ }
 
-    val allOn = sms && notif && mail
+    val allOn = sms && notif && mail && (browser || !browserOffered)
 
     Card(
         modifier = modifier.fillMaxWidth(),
@@ -91,6 +108,32 @@ fun PermissionsCard(catalog: Catalog, modifier: Modifier = Modifier) {
                     text = catalog.text("ui.perm_body"),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+
+            // Browser role FIRST. This is the one row that stands between the
+            // app and its headline promise: until it is granted, every link the
+            // user taps opens in Chrome and AppAutopsy never runs. Listed above
+            // SMS/mail because it is the highest-value switch on this card.
+            if (browserOffered) {
+                PermissionRow(
+                    labelKey = "ui.perm_browser",
+                    whyKey = "ui.perm_browser_why",
+                    granted = browser,
+                    grantedLabel = "ui.perm_browser_on",
+                    catalog = catalog,
+                    onEnable = {
+                        // Null only if we already hold it or the platform has no
+                        // role API; the row is hidden in the latter case, and a
+                        // stale hold re-reads to granted on the next tick.
+                        val request = LinkHandoff.browserRoleIntent(context)
+                        if (request != null) {
+                            runCatching { roleLauncher.launch(request) }
+                                .onFailure { openDefaultAppsSettings(context) }
+                        } else {
+                            tick++
+                        }
+                    },
                 )
             }
 
@@ -138,6 +181,7 @@ private fun PermissionRow(
     whyKey: String,
     granted: Boolean,
     catalog: Catalog,
+    grantedLabel: String = "ui.perm_granted",
     onEnable: () -> Unit,
 ) {
     Row(
@@ -146,9 +190,11 @@ private fun PermissionRow(
     ) {
         Column(modifier = Modifier.weight(1f)) {
             Text(
-                // Icon + word, never colour alone (§12) — "On" is a word.
+                // Icon + word, never colour alone (§12) — "On" is a word. The
+                // browser row overrides the word: "On" alone would not say that
+                // link taps are now being checked, which is the whole point.
                 text = if (granted) {
-                    "✅ ${catalog.text(labelKey)} · ${catalog.text("ui.perm_granted")}"
+                    "✅ ${catalog.text(labelKey)} · ${catalog.text(grantedLabel)}"
                 } else {
                     catalog.text(labelKey)
                 },
@@ -195,6 +241,17 @@ private fun openNotificationSettings(context: Context) {
         putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
     }
     runCatching { context.startActivity(intent) }
+}
+
+/**
+ * Fallback when the role request cannot be shown. Some OEM builds ship a
+ * RoleManager that reports ROLE_BROWSER as available but has no activity to
+ * resolve the request — startActivity then throws, and without this the tap
+ * would do nothing at all, which is the exact complaint this row exists to fix.
+ */
+private fun openDefaultAppsSettings(context: Context) {
+    runCatching { context.startActivity(LinkHandoff.defaultAppsSettings()) }
+        .onFailure { openNotificationSettings(context) }
 }
 
 private fun toast(context: Context, message: String) {

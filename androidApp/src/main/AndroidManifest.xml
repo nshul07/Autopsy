@@ -36,9 +36,23 @@
             android:name=".MainActivity"
             android:exported="true"
             android:label="AppAutopsy">
+            <!-- CATEGORY_APP_BROWSER is what makes Android offer AppAutopsy in
+                 Settings → Default apps → Browser, and BROWSABLE is what makes
+                 it eligible to hold the browser role at all. Both are REQUIRED
+                 for RoleManager.createRequestRoleIntent(ROLE_BROWSER) to
+                 resolve; without them the request fails silently and this app
+                 never sees a tapped link — which is exactly why link
+                 interception appeared to do nothing. The role is not optional
+                 for the product promise: Android sends ACTION_VIEW to the
+                 default browser and nobody else, so "check every link I tap"
+                 is only possible from inside the browser role. Clean links are
+                 handed straight back to the user's real browser (see
+                 LinkHandoff), so holding the role does not trap anyone here. -->
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
+                <category android:name="android.intent.category.APP_BROWSER" />
+                <category android:name="android.intent.category.BROWSABLE" />
             </intent-filter>
 
             <!-- Real-time: appear in "Open with" for every web link. -->
