@@ -28,7 +28,29 @@ hazards to check before anyone builds it:
 Everything in §2 and §3 below was measured on this machine, not recalled.
 Re-verify with the commands in §2 before trusting any of it again.
 
-**Latest session — Python backend parity + v3 APK (uncommitted).** The Python
+**Latest session — link interception actually fixed, backend committed.** Two
+commits on `main`: `98217c6` (backend parity + `phish_path` + FP elimination) and
+`73c3096` (**the link-tap fix**). The headline correction:
+
+⚠️ **The link-tap bug was never in the scanner.** "I tap a link and AppAutopsy
+does nothing" had a one-line cause: **Android sends `ACTION_VIEW` to the default
+browser and to nobody else.** The VIEW/BROWSABLE filter only makes us appear in
+"Open with", which is offered *only when no default is set* — so on any normal
+phone Chrome swallowed the tap before it reached us. `LinkHandoff.browserRoleIntent()`
+and `holdsBrowserRole()` existed and were correct but had **zero call sites**, and
+the manifest was missing both pieces Android requires before it will offer the
+role at all: `CATEGORY_APP_BROWSER` (eligibility in Settings → Default apps →
+Browser) and `CATEGORY_BROWSABLE` on the MAIN filter. Without them
+`createRequestRoleIntent(ROLE_BROWSER)` fails silently. Now requested from a row
+at the top of `PermissionsCard`. **Verified `APP_BROWSER` + `BROWSABLE` survive
+into the merged manifest**; `assembleDebug` clean.
+
+This is worth internalising before any future UI work: **a filter in the manifest
+is not interception.** PROCESS_TEXT (text-selection menu) and SEND (share sheet)
+work without any role and are the only doors that function on an unmodified
+phone; the browser role is what upgrades them into "every tap, automatically".
+
+**Latest session — Python backend parity + v3 APK (committed as `98217c6`).** The Python
 link engine was brought up to the Kotlin engine (§4 is now *done*, not pending;
 see §4 for what was ported). Two things it fixed that matter:
 
@@ -203,6 +225,45 @@ process. When that domain was `live.com`, the token `live` sits inside `olive`,
 and a clean domain became an impersonation. It is now a `tuple`, and `heuristics.py`
 builds its token lists order-preservingly. **Anywhere this codebase relies on
 "the first element" of a set, the same class of bug is waiting.**
+
+**4.6 — Measured on the Kaggle Phishing Site URLs corpus. ✅ Done.**
+20 000 bad / 20 000 good URLs, fully offline, no brand blocklist, no network.
+Harness: `.bench/full.py` (scratch, gitignored); CLI: `tools/bench_phishing.py`.
+
+| | before | after |
+|---|---|---|
+| bad URLs alarmed (red+yellow) | 1.25% | **3.40%** |
+| good URLs alarmed | 0.24% → **41 forced REDs** | **0.00% — zero** |
+
+The false-positive figure was the actual defect, not the recall. Before the fix,
+`citibank.co.uk`, `hiexpress.com` (×6), `devexpress.com` (×5), `picosoft.it`,
+`oakbank.co.nz`, `statebankofindia.com` and `railway.org` (×3) were all forced
+RED by the distance-2 typo rule. All are clean now. The new `phish_path` check
+(injected credential path: `inject_dirs` × `credential_words`) contributes
+0.21 pp of the recall gain at zero FP cost — measured 5.0% of bad, 0.00% of good.
+
+**96.6% of missed bad URLs carry no brand token at all.** They are compromised
+legitimate sites with a dropper injected into an existing path. Nothing offline
+can see them; that is what a reputation lookup or blocklist is for, and v1 has
+neither. This is a structural ceiling, not a bug to fix.
+
+**The `rnicrosoft` trade — deliberate, documented, tested on both sides.**
+`rnicrosoft.com` is a genuine Microsoft squat (one inserted `n`) but does **not**
+contain the string `microsoft`. `picosoft.it` — a real Italian software firm — is
+one insertion from `microsoft` too, and is string-indistinguishable from it. No
+distance-2 test separates them, so the rule requires the brand word to stay
+**visible inside the domain**: `rnmicrosoft` (which contains it) accuses,
+`rnicrosoft` and `picosoft` do not. **Cost: one documented miss. Benefit: no real
+bank is ever cried wolf on.** Both suites assert the miss explicitly —
+`test_two_edit_squat_without_the_embedded_brand_word_is_a_known_miss` (Python),
+`two-edit near miss of a real business is a documented miss` (Kotlin) — so it is
+visible rather than surprising.
+
+⚠️ **Load-bearing detail.** `_bounded_edit_distance` / `boundedEditDistance`
+return `max_dist + 1` as the "too far" sentinel, so with a budget of 1 a result
+of `2` means *unrelated*, not *two edits*. Any condition on the raw distance must
+keep the `1 <= d <= budget` bound — dropping it made every token match every
+domain and briefly turned `apple.com` into a "SampleBank" impersonation.
 
 **4.5 — Two smaller alignment gaps (unchanged).** `brands.json` `official_cert_sha256` is `[]` for every brand, so `impersonation`/`repackaging` brand-anchored checks are `not_checked` on both sides — correct per §6, must stay. And the Kotlin i18n test derives keys from the live rules where Python's `reason_keys.json` is a frozen snapshot: the Kotlin check is **stricter**, so Python can pass while Kotlin fails. Treat Kotlin as the gate.
 
