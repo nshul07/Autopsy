@@ -167,16 +167,46 @@ export function Settings() {
 
       {/* 4. Privacy & Safety */}
       <section className="card p-5 sm:p-6 border-line bg-surface" aria-labelledby="privacy-heading">
-        <div className="flex items-center gap-2.5 mb-2">
-          <Shield size={18} className="text-brand shrink-0" />
-          <h2 id="privacy-heading" className="text-[16px] font-bold text-ink">
-            {t('settings.privacy')}
-          </h2>
+        <div className="flex items-center justify-between gap-2 mb-3">
+          <div className="flex items-center gap-2.5">
+            <Shield size={18} className="text-brand shrink-0" />
+            <h2 id="privacy-heading" className="text-[16px] font-bold text-ink">
+              {t('settings.privacy')}
+            </h2>
+          </div>
+          <span className="text-[11px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20">
+            Offline Model
+          </span>
         </div>
-        <p className="text-[13.5px] text-ink-soft leading-relaxed">
-          {t('settings.privacyBody')}
-        </p>
-        <p className="text-[12.5px] text-ink-muted mt-2 italic">
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-[13px] mb-4">
+          <div className="p-3 rounded-xl border border-line bg-sunken/40">
+            <span className="font-bold text-ink block">Analysis happens on-device</span>
+            <p className="text-ink-muted text-[12px] mt-0.5">
+              All manifest parsing, category heuristics, and signature checks execute locally on this phone.
+            </p>
+          </div>
+          <div className="p-3 rounded-xl border border-line bg-sunken/40">
+            <span className="font-bold text-ink block">No accounts or logins</span>
+            <p className="text-ink-muted text-[12px] mt-0.5">
+              No registration, email, phone number, or account creation is required or collected.
+            </p>
+          </div>
+          <div className="p-3 rounded-xl border border-line bg-sunken/40">
+            <span className="font-bold text-ink block">Zero telemetry</span>
+            <p className="text-ink-muted text-[12px] mt-0.5">
+              No analytics tracking, session recording, device fingerprinting, or advertising SDKs.
+            </p>
+          </div>
+          <div className="p-3 rounded-xl border border-line bg-sunken/40">
+            <span className="font-bold text-ink block">Data is not stored or sent away</span>
+            <p className="text-ink-muted text-[12px] mt-0.5">
+              User-generated URLs, messages, and APK file bytes are never stored on a server or transmitted away.
+            </p>
+          </div>
+        </div>
+
+        <p className="text-[12.5px] text-ink-muted italic border-t border-line pt-3">
           {t('settings.privacyLimit')}
         </p>
       </section>

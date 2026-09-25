@@ -11,14 +11,21 @@ import type { Lang } from '../types/contract'
 import en from './locales/en.json'
 import hi from './locales/hi.json'
 import pa from './locales/pa.json'
+import messagesEn from './locales/messages_en.json'
+import messagesHi from './locales/messages_hi.json'
+import messagesPa from './locales/messages_pa.json'
 
 export const LANGUAGES: { code: Lang; label: string; native: string; speech: string }[] = [
   { code: 'en', label: 'English', native: 'English', speech: 'en-IN' },
-  { code: 'hi', label: 'Hindi', native: 'हिंदी', speech: 'hi-IN' },
+  { code: 'hi', label: 'Hindi', native: 'हिन्दी', speech: 'hi-IN' },
   { code: 'pa', label: 'Punjabi', native: 'ਪੰਜਾਬੀ', speech: 'pa-IN' },
 ]
 
-const DICTIONARIES: Record<Lang, unknown> = { en, hi, pa }
+const DICTIONARIES: Record<Lang, unknown> = {
+  en: { ...messagesEn, ...en },
+  hi: { ...messagesHi, ...hi },
+  pa: { ...messagesPa, ...pa },
+}
 
 const STORAGE_KEY = 'appautopsy.lang'
 const DEFAULT_LANG: Lang = 'en'
@@ -42,8 +49,12 @@ function readStoredLang(): Lang {
   return DEFAULT_LANG
 }
 
-/** Walk a dotted path through the dictionary. */
+/** Walk a dotted path or flat key through the dictionary. */
 function lookup(dict: unknown, path: string): unknown {
+  if (!dict || typeof dict !== 'object') return undefined
+  if (path in (dict as Record<string, unknown>)) {
+    return (dict as Record<string, unknown>)[path]
+  }
   return path.split('.').reduce<unknown>((node, key) => {
     if (node && typeof node === 'object' && key in (node as Record<string, unknown>)) {
       return (node as Record<string, unknown>)[key]

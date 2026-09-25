@@ -223,10 +223,13 @@ export interface ApiErrorBody {
   error: { code: string; message: string }
 }
 
+export type ScanSource = 'link' | 'sms' | 'email' | 'manual'
+
 /** A report summary as stored in local history. Never holds file bytes. */
 export interface HistoryEntry {
   id: string
   type: 'apk' | 'link' | 'message'
+  source?: ScanSource
   title: string
   subtitle?: string
   score: number
