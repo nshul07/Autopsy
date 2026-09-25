@@ -7,13 +7,11 @@ import {
   ChevronDown,
   Box,
   Fingerprint,
-  Info,
 } from 'lucide-react'
 import type { ApkReport } from '../types/contract'
 import { useI18n } from '../i18n'
 import { useSpeech } from '../hooks/useSpeech'
-import RiskGauge from '../components/RiskGauge'
-import RiskBadge from '../components/RiskBadge'
+import VerdictDisplay from '../components/VerdictDisplay'
 import PermissionCard from '../components/PermissionCard'
 import PatternCard from '../components/PatternCard'
 import RepackagingCard from '../components/RepackagingCard'
@@ -78,17 +76,17 @@ export function ApkResult({ report }: ApkResultProps) {
 
   return (
     <div className="container-page py-6 space-y-6 animate-fade-in">
-      {/* 1. Header & App Identity */}
+      {/* 1. App Identity Header */}
       <section className="card p-5 sm:p-6 border-line bg-surface">
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-start gap-3.5 min-w-0">
-            <div className="w-13 h-13 rounded-2xl bg-brand-soft text-brand flex items-center justify-center shrink-0 border border-brand/20 shadow-xs">
-              <Box size={28} strokeWidth={2} />
+            <div className="w-12 h-12 rounded-2xl bg-brand-soft text-brand flex items-center justify-center shrink-0 border border-brand/20 shadow-xs">
+              <Box size={26} strokeWidth={2} />
             </div>
 
             <div className="min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
-                <h1 className="text-[20px] sm:text-[22px] font-bold text-ink tracking-tight truncate">
+                <h1 className="text-[19px] sm:text-[21px] font-bold text-ink tracking-tight truncate">
                   {report.app.label || 'Unknown Application'}
                 </h1>
                 {'isDemo' in report && (
@@ -148,76 +146,49 @@ export function ApkResult({ report }: ApkResultProps) {
         </div>
       </section>
 
-      {/* 2. Risk Summary & Gauge */}
-      <section className="card p-6 sm:p-8 border-line bg-surface">
-        <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6 sm:gap-8">
-          <div className="shrink-0 flex justify-center">
-            <RiskGauge score={report.score} band={report.band} size={170} />
-          </div>
+      {/* 2. Core UI Verdict Display: Icon, Text Label, Color, Score, Reasons & Green Safety Disclaimer */}
+      <VerdictDisplay
+        verdict={report.verdict}
+        band={report.band}
+        score={report.score}
+        summary={report.summary}
+        reasons={report.reasons}
+        criticalPatternTriggered={report.critical_pattern_triggered}
+        showDisclaimer={true}
+      />
 
-          <div className="flex-1 text-center sm:text-left min-w-0">
-            <RiskBadge band={report.band} size="lg" />
-
-            <h2 className="text-[20px] sm:text-[22px] font-bold text-ink tracking-tight mt-3">
-              {actionRecommendation}
-            </h2>
-
-            <p className="text-[14px] text-ink-soft leading-relaxed mt-2 max-w-lg">
-              {report.summary}
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* 3. Why this result? */}
-      {report.reasons && report.reasons.length > 0 && (
-        <section className="card p-5 sm:p-6 border-line bg-surface" aria-labelledby="why-result-heading">
-          <h3 id="why-result-heading" className="text-[17px] font-bold text-ink tracking-tight mb-3">
-            {t('result.sections.why')}
-          </h3>
-          <ul className="space-y-2.5">
-            {report.reasons.map((reason, idx) => (
-              <li key={idx} className="flex items-start gap-2.5 text-[14px] text-ink leading-relaxed">
-                <span className="w-1.5 h-1.5 rounded-full bg-brand shrink-0 mt-2" />
-                <span>{reason}</span>
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
-
-      {/* 4. Repackaging Card (THE WEDGE - High visibility) */}
+      {/* 3. Repackaging Card (THE WEDGE - High visibility) */}
       <RepackagingCard
         repackaging={report.repackaging}
         sha256={report.app.sha256}
         packageName={report.app.package}
       />
 
-      {/* 5. Suspicious Patterns */}
+      {/* 4. Suspicious Patterns */}
       <PatternCard patterns={report.patterns} />
 
-      {/* 6. Permissions Table */}
+      {/* 5. Permissions Table */}
       <PermissionCard permissions={report.permissions} />
 
-      {/* 7. Minimum Permission Baseline Prescription */}
+      {/* 6. Minimum Permission Baseline Prescription */}
       <PrescriptionCard
         prescription={report.prescription}
         categoryName={report.category?.id}
       />
 
-      {/* 8. What Changed? Version Diff Tracker */}
+      {/* 7. What Changed? Version Diff Tracker */}
       <UpdateDiffCard updateDiff={report.update_diff} />
 
-      {/* 9. Crowd Intelligence */}
+      {/* 8. Crowd Intelligence */}
       <CrowdIntelCard crowdIntel={report.crowd_intel} />
 
-      {/* 10. Action Playbook (What should I do now?) */}
+      {/* 9. Action Playbook (What should I do now?) */}
       <PlaybookCard steps={report.playbook} appName={report.app.label} />
 
-      {/* 11. Calibration Card (Why this result might be wrong) */}
+      {/* 10. Calibration Card (Why this result might be wrong) */}
       <CalibrationCard reasons={report.calibration} />
 
-      {/* 12. Technical Details Accordion */}
+      {/* 11. Technical Details Accordion */}
       <section className="card p-5 border-line bg-surface">
         <button
           type="button"
@@ -267,9 +238,10 @@ export function ApkResult({ report }: ApkResultProps) {
         )}
       </section>
 
-      {/* 13. Mandatory Static Analysis Disclaimer */}
+      {/* 12. Mandatory Static Analysis Disclaimer */}
       <Disclaimer prominent />
     </div>
   )
 }
+
 export default ApkResult

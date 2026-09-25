@@ -1,5 +1,14 @@
 import { useState, useMemo } from 'react'
-import { History as HistoryIcon, Trash2, ChevronRight, FileUp, Link2, MessageSquareWarning } from 'lucide-react'
+import {
+  History as HistoryIcon,
+  Trash2,
+  ChevronRight,
+  FileUp,
+  Link2,
+  MessageSquareWarning,
+  Mail,
+  FileText,
+} from 'lucide-react'
 import { useI18n } from '../i18n'
 import { useHistory } from '../hooks/useHistory'
 import RiskBadge from '../components/RiskBadge'
@@ -37,10 +46,18 @@ export function History({ onOpenReport, onNavigateToScan }: HistoryProps) {
     return buckets
   }, [filteredHistory])
 
-  const getTypeIcon = (type: string) => {
-    if (type === 'apk') return FileUp
-    if (type === 'link') return Link2
-    return MessageSquareWarning
+  const getSourceIcon = (source?: string, type?: string) => {
+    if (source === 'link' || type === 'link') return Link2
+    if (source === 'email') return Mail
+    if (source === 'sms' || type === 'message') return MessageSquareWarning
+    return FileUp
+  }
+
+  const getSourceLabel = (source?: string, type?: string) => {
+    if (source === 'link' || type === 'link') return t('dashboard.sources.link') || 'Link'
+    if (source === 'email') return t('dashboard.sources.email') || 'Email'
+    if (source === 'sms' || type === 'message') return t('dashboard.sources.sms') || 'SMS'
+    return t('dashboard.sources.manual') || 'Manual'
   }
 
   const handleClear = () => {
@@ -128,7 +145,9 @@ export function History({ onOpenReport, onNavigateToScan }: HistoryProps) {
 
                 <div className="space-y-2">
                   {items.map((item) => {
-                    const Icon = getTypeIcon(item.type)
+                    const Icon = getSourceIcon(item.source, item.type)
+                    const sourceTag = getSourceLabel(item.source, item.type)
+
                     return (
                       <button
                         key={item.id}
@@ -146,6 +165,9 @@ export function History({ onOpenReport, onNavigateToScan }: HistoryProps) {
                               <h4 className="text-[14.5px] font-bold text-ink truncate">
                                 {item.title}
                               </h4>
+                              <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-sunken border border-line text-ink-muted">
+                                {sourceTag}
+                              </span>
                               <RiskBadge band={item.band} size="sm" />
                             </div>
                             <p className="text-[12.5px] text-ink-muted truncate mt-0.5">
@@ -172,4 +194,5 @@ export function History({ onOpenReport, onNavigateToScan }: HistoryProps) {
     </div>
   )
 }
+
 export default History

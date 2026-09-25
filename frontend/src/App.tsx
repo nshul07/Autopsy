@@ -16,7 +16,9 @@ import type {
   MessageReport,
   AnyReport,
   HistoryEntry,
+  ScanSource,
 } from './types/contract'
+import { localizeReport } from './lib/localizeReport'
 
 // Components
 import AppHeader from './components/AppHeader'
@@ -90,7 +92,7 @@ export function App() {
       try {
         const report = await analyzeApk(file, lang)
         setApkReport(report)
-        addReport(report)
+        addReport(report, 'manual')
         setView('apkResult')
       } catch (err: any) {
         setApkError({ kind: errorKindOf(err), message: err.message })
@@ -126,10 +128,10 @@ export function App() {
       try {
         const report = await checkLink(url, lang)
         setLinkReport(report)
-        addReport(report)
+        addReport(report, 'link')
       } catch (err: any) {
         // Fallback demo link report in development so flow never breaks
-        setLinkReport({
+        const fallback: LinkReport = {
           report_id: 'link-demo-fallback',
           type: 'link',
           created_at: new Date().toISOString(),
@@ -153,7 +155,9 @@ export function App() {
           calibration: ['Reputation lookup was unavailable, so history could not be verified.'],
           limitations: 'Static analysis only. This is not a guarantee of safety.',
           lang,
-        })
+        }
+        setLinkReport(fallback)
+        addReport(fallback, 'link')
       } finally {
         setLinkLoading(false)
         scrollToTop()
@@ -170,15 +174,15 @@ export function App() {
 
   // Handle Message check
   const handleCheckMessage = useCallback(
-    async (text: string) => {
+    async (text: string, source: ScanSource = 'sms') => {
       setMessageLoading(true)
       try {
         const report = await checkMessage(text, lang)
         setMessageReport(report)
-        addReport(report)
+        addReport(report, source)
       } catch (err: any) {
         // Fallback demo message report in development
-        setMessageReport({
+        const fallback: MessageReport = {
           report_id: 'msg-demo-fallback',
           type: 'message',
           created_at: new Date().toISOString(),
@@ -197,7 +201,9 @@ export function App() {
           calibration: ['This check analyzes message text only. It does not verify sender identity.'],
           limitations: 'Static analysis only. This is not a guarantee of safety.',
           lang,
-        })
+        }
+        setMessageReport(fallback)
+        addReport(fallback, source)
       } finally {
         setMessageLoading(false)
         scrollToTop()
@@ -205,6 +211,20 @@ export function App() {
     },
     [lang, addReport]
   )
+
+  // Language switching should be clear and should not require rescanning:
+  // When language changes, dynamically re-localize any open reports in place.
+  useEffect(() => {
+    if (apkReport) {
+      setApkReport((prev) => (prev ? (localizeReport(prev, lang) as ApkReport) : null))
+    }
+    if (linkReport) {
+      setLinkReport((prev) => (prev ? (localizeReport(prev, lang) as LinkReport) : null))
+    }
+    if (messageReport) {
+      setMessageReport((prev) => (prev ? (localizeReport(prev, lang) as MessageReport) : null))
+    }
+  }, [lang])
 
   // Open a saved report from history
   const handleOpenHistoryReport = (entry: HistoryEntry) => {
@@ -311,6 +331,7 @@ export function App() {
               const item = history.find((h) => h.id === id)
               if (item) handleOpenHistoryReport(item)
             }}
+            onSelectMockScenario={handleSelectMockScenario}
             recentScan={latestScan}
           />
         )}

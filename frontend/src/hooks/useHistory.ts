@@ -1,9 +1,22 @@
-import { useState, useEffect, useCallback } from 'react'
-import type { AnyReport, HistoryEntry } from '../types/contract'
+import { useState, useEffect, useCallback, useMemo } from 'react'
+import type { AnyReport, HistoryEntry, ScanSource } from '../types/contract'
 
 const HISTORY_KEY = 'appautopsy.history'
 const REPORTS_STORE_KEY = 'appautopsy.reports.cache'
 const MAX_ENTRIES = 50
+
+export interface HistoryStats {
+  total: number
+  red: number
+  yellow: number
+  green: number
+  sources: {
+    link: number
+    sms: number
+    email: number
+    manual: number
+  }
+}
 
 export function useHistory() {
   const [history, setHistory] = useState<HistoryEntry[]>([])
@@ -12,7 +25,13 @@ export function useHistory() {
     try {
       const raw = localStorage.getItem(HISTORY_KEY)
       if (raw) {
-        setHistory(JSON.parse(raw))
+        const parsed: HistoryEntry[] = JSON.parse(raw)
+        // Normalize older entries without source
+        const normalized = parsed.map((item) => ({
+          ...item,
+          source: item.source || (item.type === 'link' ? 'link' : item.type === 'message' ? 'sms' : 'manual'),
+        }))
+        setHistory(normalized)
       }
     } catch {
       /* ignore */
@@ -24,13 +43,15 @@ export function useHistory() {
   }, [loadHistory])
 
   const addReport = useCallback(
-    (report: AnyReport) => {
+    (report: AnyReport, explicitSource?: ScanSource) => {
       let title = 'Unknown'
       let subtitle = ''
+      let source: ScanSource = explicitSource || 'manual'
 
       if (report.type === 'apk') {
         title = report.app.label || report.app.package || 'APK File'
         subtitle = report.app.package
+        source = explicitSource || 'manual'
       } else if (report.type === 'link') {
         try {
           title = new URL(report.url).hostname
@@ -38,14 +59,17 @@ export function useHistory() {
           title = report.url
         }
         subtitle = report.direct_apk ? 'APK download link' : 'Web link'
+        source = explicitSource || 'link'
       } else if (report.type === 'message') {
         title = 'Suspicious message'
         subtitle = `${report.signals.length} warning signs`
+        source = explicitSource || 'sms'
       }
 
       const entry: HistoryEntry = {
         id: report.report_id,
         type: report.type,
+        source,
         title,
         subtitle,
         score: report.score,
@@ -99,5 +123,19 @@ export function useHistory() {
     setHistory([])
   }, [])
 
-  return { history, addReport, getCachedReport, clearHistory, refresh: loadHistory }
+  const stats: HistoryStats = useMemo(() => {
+    const total = history.length
+    const red = history.filter((h) => h.verdict === 'red' || h.band === 'high').length
+    const yellow = history.filter((h) => h.verdict === 'yellow' || h.band === 'medium').length
+    const green = history.filter((h) => h.verdict === 'green' || h.band === 'low').length
+    const sources = {
+      link: history.filter((h) => h.source === 'link').length,
+      sms: history.filter((h) => h.source === 'sms').length,
+      email: history.filter((h) => h.source === 'email').length,
+      manual: history.filter((h) => h.source === 'manual').length,
+    }
+    return { total, red, yellow, green, sources }
+  }, [history])
+
+  return { history, stats, addReport, getCachedReport, clearHistory, refresh: loadHistory }
 }

@@ -11,6 +11,59 @@
     "settings": "Settings"
   },
 
+  "dashboard": {
+    "title": "Security Dashboard",
+    "badge": "On-Device Static Analyzer",
+    "privacyBanner": "100% On-Device Analysis • No Accounts • Zero Telemetry",
+    "privacyDetail": "User-generated URLs, messages, and APK files are never stored or transmitted away.",
+    "totalChecked": "Total Checked",
+    "flaggedRed": "Flagged RED",
+    "warnedYellow": "Warned YELLOW",
+    "lookedClean": "Looked Clean",
+    "sourceAttribution": "Source Breakdown",
+    "recentActivity": "Recent Activity",
+    "sources": {
+      "link": "Link",
+      "sms": "SMS",
+      "email": "Email",
+      "manual": "Manual"
+    },
+    "noActivity": "No inspections recorded yet",
+    "noActivityHint": "Start by inspecting an APK file, web link, or message below.",
+    "cleanDisclaimer": "A clean result indicates no suspicious patterns were detected in static checks. This does not guarantee safety."
+  },
+
+  "verdict": {
+    "green": {
+      "label": "LOOKED CLEAN",
+      "summary": "No major red flags or suspicious patterns were found in static analysis.",
+      "disclaimer": "Notice: A clean verdict indicates no known suspicious patterns or permission mismatches were detected during static inspection. It does NOT guarantee that this app or link is safe."
+    },
+    "yellow": {
+      "label": "REVIEW CAREFULLY",
+      "summary": "Unusual permissions or suspicious patterns detected. Inspect closely before proceeding.",
+      "disclaimer": "Static analysis detected elevated risks. Do not grant permissions you do not understand."
+    },
+    "red": {
+      "label": "HIGH RISK",
+      "summary": "Critical warning signals or fraud patterns detected. Do not install or open.",
+      "disclaimer": "High danger patterns detected. Do not install or interact."
+    }
+  },
+
+  "privacy": {
+    "title": "On-Device Privacy Model",
+    "badge": "Privacy Verified",
+    "point1Title": "Analysis happens on-device",
+    "point1Desc": "Static decompilation, pattern detection, and permission baseline comparisons are evaluated locally.",
+    "point2Title": "No user accounts",
+    "point2Desc": "No login, email, phone number, or credentials are required or requested.",
+    "point3Title": "No telemetry or tracking",
+    "point3Desc": "Zero analytics, behavioral beacons, third-party trackers, or advertising SDKs.",
+    "point4Title": "User data is never transmitted",
+    "point4Desc": "APK bytes, checked URLs, and suspicious message texts never leave your device."
+  },
+
   "common": {
     "back": "Back",
     "cancel": "Cancel",

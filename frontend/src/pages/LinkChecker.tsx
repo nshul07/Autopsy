@@ -1,9 +1,8 @@
 import React, { useState } from 'react'
-import { Link2, QrCode, Globe, ShieldAlert, ArrowRight, ShieldCheck, ExternalLink, RefreshCw } from 'lucide-react'
+import { Link2, QrCode, Globe, ArrowRight, RefreshCw, ExternalLink } from 'lucide-react'
 import { useI18n } from '../i18n'
 import { PrimaryButton, SecondaryButton } from '../components/Buttons'
-import RiskGauge from '../components/RiskGauge'
-import RiskBadge from '../components/RiskBadge'
+import VerdictDisplay from '../components/VerdictDisplay'
 import Disclaimer from '../components/Disclaimer'
 import CalibrationCard from '../components/CalibrationCard'
 import type { LinkReport } from '../types/contract'
@@ -85,7 +84,7 @@ export function LinkChecker({
                   setErrorMsg(null)
                 }}
                 placeholder={t('link.placeholder')}
-                className="w-full pl-10 pr-4 py-3 rounded-xl border border-line bg-surface text-ink text-[14.5px] focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand placeholder:text-ink-faint transition-all"
+                className="w-full pl-10 pr-4 py-3 rounded-xl border border-line bg-surface text-ink text-[14.5px] focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand placeholder:text-ink-faint transition-all font-mono text-[13.5px]"
               />
             </div>
             {errorMsg && (
@@ -131,7 +130,7 @@ export function LinkChecker({
               }
               className="text-[12px] font-medium px-3 py-1.5 rounded-lg border border-risk-high-border bg-risk-high-bg/40 text-risk-high-text hover:bg-risk-high-bg transition-colors"
             >
-              ⚠ Fake Bank Reward APK
+              ⚠ Fake Bank Reward APK (Red)
             </button>
             <button
               type="button"
@@ -147,28 +146,15 @@ export function LinkChecker({
       {/* Result Section (when report is present) */}
       {report && (
         <section className="space-y-6 animate-fade-up">
-          {/* Risk Card */}
-          <div className="card p-6 sm:p-8 border-line bg-surface">
-            <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6 sm:gap-8">
-              <RiskGauge score={report.score} band={report.band} size={160} />
-
-              <div className="flex-1 text-center sm:text-left min-w-0">
-                <RiskBadge band={report.band} size="lg" />
-
-                <h2 className="text-[20px] font-bold text-ink tracking-tight mt-3">
-                  {report.band === 'high'
-                    ? t('result.action.high')
-                    : report.band === 'medium'
-                    ? t('result.action.medium')
-                    : t('result.action.low')}
-                </h2>
-
-                <p className="text-[14px] text-ink-soft leading-relaxed mt-2">
-                  {report.summary}
-                </p>
-              </div>
-            </div>
-          </div>
+          {/* Core UI Verdict Display: Icon, Text Label, Color, Score, Reasons & Green Safety Disclaimer */}
+          <VerdictDisplay
+            verdict={report.verdict}
+            band={report.band}
+            score={report.score}
+            summary={report.summary}
+            reasons={report.reasons}
+            showDisclaimer={true}
+          />
 
           {/* Direct APK Download Hand-off Banner */}
           {report.direct_apk && (
@@ -201,7 +187,7 @@ export function LinkChecker({
             <dl className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-[13.5px]">
               <div className="p-3 rounded-xl border border-line bg-sunken/40">
                 <dt className="text-ink-muted text-[12px]">{t('link.domain')}</dt>
-                <dd className="font-semibold text-ink break-all mt-0.5">
+                <dd className="font-semibold text-ink break-all mt-0.5 font-mono text-[13px]">
                   {hostOf(report.url)}
                 </dd>
               </div>
@@ -236,22 +222,6 @@ export function LinkChecker({
               </div>
             </dl>
 
-            {report.reasons && report.reasons.length > 0 && (
-              <div className="mt-5 pt-4 border-t border-line">
-                <h4 className="text-[13px] font-bold text-ink-muted uppercase tracking-wider mb-2.5">
-                  {t('result.sections.why')}
-                </h4>
-                <ul className="space-y-2">
-                  {report.reasons.map((r, i) => (
-                    <li key={i} className="flex items-start gap-2 text-[13.5px] text-ink">
-                      <span className="w-1.5 h-1.5 rounded-full bg-brand shrink-0 mt-2" />
-                      <span>{r}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
             <div className="mt-5 flex justify-end">
               <SecondaryButton size="md" onClick={onReset} icon={<RefreshCw size={15} />}>
                 Check another link
@@ -267,4 +237,5 @@ export function LinkChecker({
     </div>
   )
 }
+
 export default LinkChecker

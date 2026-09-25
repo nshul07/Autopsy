@@ -7,19 +7,20 @@ import {
   ShieldCheck,
   RefreshCw,
   Info,
+  Mail,
+  FileText,
 } from 'lucide-react'
 import { useI18n } from '../i18n'
 import { PrimaryButton, SecondaryButton } from '../components/Buttons'
-import RiskGauge from '../components/RiskGauge'
-import RiskBadge from '../components/RiskBadge'
+import VerdictDisplay from '../components/VerdictDisplay'
 import Disclaimer from '../components/Disclaimer'
 import CalibrationCard from '../components/CalibrationCard'
-import type { MessageReport } from '../types/contract'
+import type { MessageReport, ScanSource } from '../types/contract'
 
 interface MessageCheckerProps {
   report: MessageReport | null
   loading: boolean
-  onCheckMessage: (text: string) => void
+  onCheckMessage: (text: string, source?: ScanSource) => void
   onCheckUrl: (url: string) => void
   onReset: () => void
 }
@@ -36,6 +37,7 @@ export function MessageChecker({
 }: MessageCheckerProps) {
   const { t } = useI18n()
   const [messageText, setMessageText] = useState('')
+  const [sourceType, setSourceType] = useState<ScanSource>('sms')
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -48,12 +50,13 @@ export function MessageChecker({
       return
     }
 
-    onCheckMessage(trimmed)
+    onCheckMessage(trimmed, sourceType)
   }
 
   const handlePasteSample = () => {
     setMessageText(SAMPLE_SCAM_MESSAGE)
-    onCheckMessage(SAMPLE_SCAM_MESSAGE)
+    setSourceType('sms')
+    onCheckMessage(SAMPLE_SCAM_MESSAGE, 'sms')
   }
 
   return (
@@ -73,9 +76,56 @@ export function MessageChecker({
       {/* Message Input Box */}
       <section className="card p-5 sm:p-6 border-line bg-surface">
         <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Source Attribution Selector */}
+          <div>
+            <label className="block text-[12.5px] font-bold uppercase tracking-wider text-ink-muted mb-2">
+              Message Source (Attribution)
+            </label>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setSourceType('sms')}
+                className={`flex-1 py-2 px-3 rounded-lg border text-[13px] font-semibold flex items-center justify-center gap-1.5 transition-all ${
+                  sourceType === 'sms'
+                    ? 'border-brand bg-brand-soft text-brand shadow-xs'
+                    : 'border-line bg-surface text-ink-muted hover:text-ink'
+                }`}
+              >
+                <MessageSquareWarning size={15} />
+                <span>SMS / WhatsApp</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setSourceType('email')}
+                className={`flex-1 py-2 px-3 rounded-lg border text-[13px] font-semibold flex items-center justify-center gap-1.5 transition-all ${
+                  sourceType === 'email'
+                    ? 'border-brand bg-brand-soft text-brand shadow-xs'
+                    : 'border-line bg-surface text-ink-muted hover:text-ink'
+                }`}
+              >
+                <Mail size={15} />
+                <span>Email</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setSourceType('manual')}
+                className={`flex-1 py-2 px-3 rounded-lg border text-[13px] font-semibold flex items-center justify-center gap-1.5 transition-all ${
+                  sourceType === 'manual'
+                    ? 'border-brand bg-brand-soft text-brand shadow-xs'
+                    : 'border-line bg-surface text-ink-muted hover:text-ink'
+                }`}
+              >
+                <FileText size={15} />
+                <span>Manual</span>
+              </button>
+            </div>
+          </div>
+
           <div>
             <label htmlFor="message-textarea" className="block text-[13px] font-bold text-ink mb-1.5">
-              Paste SMS or WhatsApp Message
+              Paste Message Text
             </label>
             <textarea
               id="message-textarea"
@@ -86,7 +136,7 @@ export function MessageChecker({
                 setErrorMsg(null)
               }}
               placeholder={t('message.placeholder')}
-              className="w-full p-3.5 rounded-xl border border-line bg-surface text-ink text-[14.5px] focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand placeholder:text-ink-faint transition-all resize-y"
+              className="w-full p-3.5 rounded-xl border border-line bg-surface text-ink text-[14px] focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand placeholder:text-ink-faint transition-all resize-y"
             />
             {errorMsg && (
               <p className="text-[12.5px] text-risk-high-text font-medium mt-1">
@@ -124,28 +174,15 @@ export function MessageChecker({
       {/* Analysis Result */}
       {report && (
         <section className="space-y-6 animate-fade-up">
-          {/* Risk Card */}
-          <div className="card p-6 sm:p-8 border-line bg-surface">
-            <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6 sm:gap-8">
-              <RiskGauge score={report.score} band={report.band} size={160} />
-
-              <div className="flex-1 text-center sm:text-left min-w-0">
-                <RiskBadge band={report.band} size="lg" />
-
-                <h2 className="text-[20px] font-bold text-ink tracking-tight mt-3">
-                  {report.band === 'high'
-                    ? t('result.action.high')
-                    : report.band === 'medium'
-                    ? t('result.action.medium')
-                    : t('result.action.low')}
-                </h2>
-
-                <p className="text-[14px] text-ink-soft leading-relaxed mt-2">
-                  {report.summary}
-                </p>
-              </div>
-            </div>
-          </div>
+          {/* Core UI Verdict Display: Icon, Text Label, Color, Score, Reasons & Green Safety Disclaimer */}
+          <VerdictDisplay
+            verdict={report.verdict}
+            band={report.band}
+            score={report.score}
+            summary={report.summary}
+            reasons={report.reasons}
+            showDisclaimer={true}
+          />
 
           {/* Warning Signs List */}
           <div className="card p-5 sm:p-6 border-line bg-surface">
@@ -233,4 +270,5 @@ export function MessageChecker({
     </div>
   )
 }
+
 export default MessageChecker
