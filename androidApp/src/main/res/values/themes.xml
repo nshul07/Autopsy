@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Manifest references @style/Theme.AppAutopsy; this is it. A plain
+         Material light NoActionBar base — Compose draws everything above it,
+         and dark mode is handled by the Material3 theme in code. -->
+    <style name="Theme.AppAutopsy" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:windowLightStatusBar">true</item>
+    </style>
+</resources>
