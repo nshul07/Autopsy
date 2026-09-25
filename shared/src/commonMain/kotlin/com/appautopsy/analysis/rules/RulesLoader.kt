@@ -31,6 +31,7 @@ object RulesLoader {
         val categoriesRaw = json.parseToJsonElement(readFile("categories.json")).jsonObject
         val patternsRaw = json.parseToJsonElement(readFile("patterns.json")).jsonObject
         val brandsRaw = json.parseToJsonElement(readFile("brands.json")).jsonObject
+        val linkRulesRaw = json.parseToJsonElement(readFile("link_rules.json")).jsonObject
 
         val groups = rulesRaw["groups"]!!.jsonObject
 
@@ -96,6 +97,30 @@ object RulesLoader {
             patterns = buildPatterns(patternsRaw["patterns"]!!.jsonArray),
             brands = brands,
             brandAliasIndex = aliasIndex,
+            linkRules = buildLinkRules(linkRulesRaw),
+        )
+    }
+
+    private fun buildLinkRules(raw: JsonObject): LinkRules {
+        val checks = raw["checks"]!!.jsonObject.entries.associate { (id, element) ->
+            val spec = element.jsonObject
+            id to LinkCheckDef(
+                id = id,
+                points = spec["points"]!!.jsonPrimitive.content.toInt(),
+                maxPoints = spec["max_points"]?.jsonPrimitive?.content?.toInt()
+                    ?: spec["points"]!!.jsonPrimitive.content.toInt(),
+                critical = spec["critical"]?.jsonPrimitive?.content == "true",
+                reasonKey = spec["reason_key"]!!.jsonPrimitive.content,
+            )
+        }
+        return LinkRules(
+            checks = checks,
+            suspiciousTlds = raw["suspicious_tlds"].stringSet(),
+            scamKeywords = raw["scam_keywords"].stringList(),
+            knownShorteners = raw["known_shorteners"].stringSet(),
+            apkExtensions = raw["apk_extensions"].stringList(),
+            lookalikeMaxEditDistance = raw["lookalike_max_edit_distance"]!!.jsonPrimitive.content.toInt(),
+            lookalikeLengthTolerance = raw["lookalike_length_tolerance"]!!.jsonPrimitive.content.toInt(),
         )
     }
 

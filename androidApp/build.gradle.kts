@@ -31,6 +31,9 @@ android {
         compose = true
     }
 
+    // The canonical JSON lives at repo root `data/`; no copy inside androidApp.
+    sourceSets["main"].assets.srcDir("$rootDir/data")
+
     packaging {
         resources.excludes += "/META-INF/{AL2.0,LGPL2.1}"
     }
@@ -45,6 +48,7 @@ dependencies {
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.activity.compose)
+    implementation(libs.androidx.navigation.compose)
 
     implementation(platform(libs.compose.bom))
     implementation(libs.compose.ui)

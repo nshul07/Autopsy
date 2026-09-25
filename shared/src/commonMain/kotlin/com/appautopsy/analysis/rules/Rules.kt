@@ -34,6 +34,31 @@ data class Rules(
     val patterns: List<PatternDef>,
     val brands: List<BrandDef>,
     val brandAliasIndex: Map<String, String>,
+    val linkRules: LinkRules,
+)
+
+/**
+ * Everything `link_rules.json` says, compiled to flat lookups.
+ *
+ * Kept separate from the APK rules because the link engine runs on-device in
+ * the offline v1 and must not depend on any parsing feature the phone lacks.
+ */
+data class LinkRules(
+    val checks: Map<String, LinkCheckDef>,
+    val suspiciousTlds: Set<String>,
+    val scamKeywords: List<String>,
+    val knownShorteners: Set<String>,
+    val apkExtensions: List<String>,
+    val lookalikeMaxEditDistance: Int,
+    val lookalikeLengthTolerance: Int,
+)
+
+data class LinkCheckDef(
+    val id: String,
+    val points: Int,
+    val maxPoints: Int,
+    val critical: Boolean,
+    val reasonKey: String,
 )
 
 data class BandDef(
