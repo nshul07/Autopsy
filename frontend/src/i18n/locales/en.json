@@ -1,0 +1,418 @@
+{
+  "app": {
+    "name": "AppAutopsy",
+    "tagline": "Know what an app can do before it does it."
+  },
+
+  "nav": {
+    "home": "Home",
+    "history": "History",
+    "learn": "Learn",
+    "settings": "Settings"
+  },
+
+  "common": {
+    "back": "Back",
+    "cancel": "Cancel",
+    "close": "Close",
+    "tryAgain": "Try again",
+    "continue": "Continue",
+    "expand": "Show details",
+    "collapse": "Hide details",
+    "technicalDetails": "Technical details",
+    "demoData": "Demo data",
+    "loading": "Loading",
+    "notAvailable": "Not available",
+    "notChecked": "Not checked",
+    "optional": "optional",
+    "or": "or",
+    "of": "of"
+  },
+
+  "home": {
+    "greeting": "Check before you install",
+    "headline": "Know what an app can do before it does it.",
+    "sub": "Someone sent you an app file or a link? Check it here first, in a language you read.",
+    "primaryAction": "Scan an APK",
+    "secondaryActions": "Other ways to check",
+    "actions": {
+      "apk": "Scan an APK",
+      "apkHint": "Check an app file you downloaded",
+      "link": "Check a link",
+      "linkHint": "Paste a suspicious download link",
+      "qr": "Scan a QR code",
+      "qrHint": "Point your camera at a QR code",
+      "message": "Check a message",
+      "messageHint": "Paste a message that looks like a scam"
+    },
+    "recent": "Recent checks",
+    "recentEmpty": "Your recent checks will appear here.",
+    "seeAll": "See all",
+    "why": "Why AppAutopsy?",
+    "whyItems": [
+      {
+        "title": "It compares access to purpose",
+        "body": "A flashlight needs a torch, not your messages. We check whether what an app asks for makes sense for what it claims to do."
+      },
+      {
+        "title": "It detects repackaged apps",
+        "body": "A copied app can keep a trusted name while being signed by someone else. We check the signature."
+      },
+      {
+        "title": "It tells you what to do next",
+        "body": "A score alone does not help. Every result comes with clear steps you can take right now."
+      }
+    ]
+  },
+
+  "scan": {
+    "title": "Scan an APK",
+    "sub": "Choose an Android app file to check what access it requests and whether that access matches its purpose.",
+    "choose": "Choose APK",
+    "chooseHint": "Tap to pick a .apk file from your phone",
+    "howItWorks": "How does this work?",
+    "selected": "Selected file",
+    "fileTooLarge": "This file is larger than 100 MB. Please choose a smaller file.",
+    "notApk": "This does not look like an APK file. Please choose a file ending in .apk.",
+    "startScan": "Start check",
+    "changeFile": "Choose a different file",
+    "howItWorksBody": "AppAutopsy reads the information an app file carries about itself — what it asks permission to do, and who signed it. It never installs or runs the file. The file is sent to the analysis service and is not kept on this phone.",
+    "demoPicker": "Demo mode — choose a sample result",
+    "demoPickerHint": "No backend is connected yet. Pick which sample report to show."
+  },
+
+  "progress": {
+    "title": "Checking the app",
+    "sub": "Reading the information this file provides about itself.",
+    "stages": [
+      "File received",
+      "Reading app information",
+      "Checking permissions",
+      "Comparing purpose and access",
+      "Preparing report"
+    ],
+    "generic": "This usually takes a few seconds."
+  },
+
+  "result": {
+    "title": "Result",
+    "scanComplete": "Check complete",
+    "scoreOutOf": "out of 100 risk score",
+    "band": {
+      "high": "HIGH RISK",
+      "medium": "REVIEW CAREFULLY",
+      "low": "LOW RISK"
+    },
+    "action": {
+      "high": "Do not install",
+      "medium": "Review carefully before installing",
+      "low": "No major red flags found"
+    },
+    "sections": {
+      "why": "Why this result?",
+      "permissions": "Permissions",
+      "patterns": "Suspicious patterns",
+      "repackaging": "Repackaging",
+      "updateDiff": "What changed?",
+      "playbook": "What should I do now?",
+      "calibration": "Why this result might be wrong",
+      "technical": "Technical details",
+      "crowd": "Other people who checked this file"
+    },
+    "status": {
+      "expected": "Expected",
+      "unexpected": "Unexpected",
+      "not_checked": "Not checked"
+    },
+    "permissionCount": "{count} permissions checked",
+    "expectedCount": "{count} expected",
+    "unexpectedCount": "{count} unexpected",
+    "privacy": "We do not store app files on your phone.",
+    "version": "Version",
+    "package": "Package",
+    "category": "Detected type",
+    "confidence": "Confidence",
+    "confidenceValue": {
+      "high": "High",
+      "medium": "Medium",
+      "low": "Low"
+    },
+    "sha256": "File fingerprint (SHA-256)",
+    "signer": "Signer certificate",
+    "expectedSigner": "Expected signer",
+    "actualSigner": "Actual signer",
+    "share": "Share report",
+    "print": "Save as PDF",
+    "copied": "Copied"
+  },
+
+  "repackaging": {
+    "detected": "Possible repackaged app",
+    "detectedBody": "This app appears to have a different signing identity than expected.",
+    "whyMatters": "Why does this matter?",
+    "whyMattersBody": "A modified copy of a real app can keep the same name and icon while being signed by another developer. That copy can request access the original never asked for.",
+    "notDetected": "No signer mismatch detected",
+    "notDetectedNote": "This does not prove the app is genuine. It means the signature matched what we could compare it against.",
+    "signal": "Signal",
+    "signalValue": {
+      "signer_mismatch": "Signer does not match the known version",
+      "package_collision": "Package name is used by a different app",
+      "cert_changed": "Signer changed since the last check"
+    }
+  },
+
+  "updateDiff": {
+    "noHistory": "This is the first time this app has been checked, so there is nothing to compare against.",
+    "groupsAdded": "Added in this version",
+    "groupsRemoved": "Removed in this version",
+    "versionChanged": "The version number changed",
+    "certChanged": "The signer changed, which is worth attention",
+    "noChanges": "No new permissions were added since the last check.",
+    "headline": "This update added {count} new kind of access."
+  },
+
+  "crowd": {
+    "peopleScanned": "{count} people checked this exact file",
+    "percentTold": "{percent}% were told not to install it",
+    "insufficient": "Not enough people have checked this file yet for a reliable figure.",
+    "note": "These are counts only. No information about any person is stored."
+  },
+
+  "patterns": {
+    "title": "Suspicious patterns",
+    "sub": "These are combinations of access that appear together in known scams.",
+    "consequence": "If this app is malicious, these permissions together could let it {consequence}.",
+    "otp_stealer": {
+      "label": "One-time password theft pattern",
+      "body": "This app can read your messages and also watch your notifications or control your screen. Together, that is how one-time passwords are stolen."
+    },
+    "banking_trojan": {
+      "label": "Banking fraud pattern",
+      "body": "This app can draw over other apps, control your screen and read messages. That combination is used to show a fake bank screen and capture what you type."
+    },
+    "spyware_profile": {
+      "label": "Spyware pattern",
+      "body": "This app can use your microphone, camera and location, and it starts by itself. It has no visible reason to need this."
+    },
+    "dropper": {
+      "label": "Hidden app installer pattern",
+      "body": "This app can install other apps without opening the app store. That is how unwanted apps get onto a phone."
+    },
+    "device_admin_lock": {
+      "label": "Difficult to remove",
+      "body": "This app can register as a device administrator, which can make it harder to uninstall."
+    },
+    "call_intercept": {
+      "label": "Call interception pattern",
+      "body": "This app can read your call history, place calls and use the microphone."
+    },
+    "repackaged_signer": {
+      "label": "Different developer signature",
+      "body": "The signature on this file does not match the official version of the app it claims to be."
+    }
+  },
+
+  "playbook": {
+    "title": "What should I do now?",
+    "steps": {
+      "playbook.do_not_install": "Do not install this app.",
+      "playbook.remove_if_installed": "If you already installed {app}, remove it: open Settings, then Apps, then select it and choose Uninstall.",
+      "playbook.contact_bank_if_otp": "If you shared an OTP, a PIN or a password with anyone, contact your bank straight away using the number printed on your card.",
+      "playbook.report_cybercrime": "To report it, call 1930 or visit cybercrime.gov.in.",
+      "playbook.dont_share_info": "Do not send money, OTPs or personal documents to the sender.",
+      "playbook.verify_officially": "Check the claim on the organisation's official website or the number on your card, not through the link you were sent.",
+      "playbook.review_permissions": "If you decide to install it, allow only the permissions you understand and deny the rest.",
+      "playbook.watch_for_ads": "Watch for full-screen ads or unexpected pop-ups after installing. Remove the app if they appear."
+    }
+  },
+
+  "calibration": {
+    "title": "Why this result might be wrong",
+    "sub": "Every check has limits. These are the ones that apply here."
+  },
+
+  "link": {
+    "title": "Check a download link",
+    "sub": "Paste a link you were sent. We look at where it leads without opening or downloading it.",
+    "placeholder": "https://example.com/download",
+    "action": "Check link",
+    "scanQr": "Scan a QR code instead",
+    "resultTitle": "Link result",
+    "domain": "Domain",
+    "finalDestination": "Final destination",
+    "redirects": "Redirects",
+    "https": "Secure connection",
+    "directApk": "Downloads an app file",
+    "lookalike": "Resembles a known brand",
+    "reputation": "Reputation",
+    "reputationValue": {
+      "ok": "Checked",
+      "clean": "No reports found",
+      "suspicious": "Reported as suspicious",
+      "not_checked": "Not checked"
+    },
+    "value": {
+      "yes": "Yes",
+      "no": "No"
+    },
+    "offerScan": "This link downloads an app file.",
+    "offerScanBody": "If you already downloaded it, check the file itself as well.",
+    "offerScanAction": "Scan the APK instead",
+    "empty": "Paste a link to check it."
+  },
+
+  "qr": {
+    "title": "Scan a QR code",
+    "sub": "Point your camera at a QR code containing a link. We check where it leads.",
+    "starting": "Starting the camera…",
+    "deniedTitle": "Camera access isn't available",
+    "deniedBody": "You can paste the link manually instead.",
+    "deniedAction": "Enter link manually",
+    "noCamera": "This device has no usable camera. You can paste the link manually.",
+    "found": "QR code found",
+    "detected": "Link detected in the QR code",
+    "checkIt": "Check this link",
+    "scanAgain": "Scan another code"
+  },
+
+  "message": {
+    "title": "Check a message",
+    "sub": "Paste a message that looks suspicious. We look for the warning signs common in scams.",
+    "placeholder": "Paste the message here…",
+    "action": "Check message",
+    "resultTitle": "Message result",
+    "warningSigns": "Potential warning signs",
+    "noSigns": "No common warning signs were found in this message.",
+    "noSignsNote": "That does not prove the message is genuine. If it asks for money or an OTP, verify it separately.",
+    "linksFound": "Links found in the message",
+    "privacyNote": "The message is checked for signs of a scam. It is not stored on this phone.",
+    "empty": "Paste a message to begin.",
+    "signals": {
+      "urgency": {
+        "label": "Urgency or a threat",
+        "body": "The message pressures you to act immediately, which is a common tactic."
+      },
+      "otp_request": {
+        "label": "Asks for an OTP or PIN",
+        "body": "No bank, government office or company asks for a one-time password by message."
+      },
+      "suspicious_link": {
+        "label": "Contains a link",
+        "body": "The message contains a link. Check the link before opening it."
+      },
+      "apk_mention": {
+        "label": "Mentions installing an app",
+        "body": "The message tells you to install an app to receive something. This is how most fake reward schemes spread."
+      },
+      "prize_claim": {
+        "label": "Claims a prize or benefit",
+        "body": "It promises money, a reward or a government benefit you did not apply for."
+      },
+      "kyc_threat": {
+        "label": "Threatens an account block",
+        "body": "It claims your account or connection will be blocked unless you act now."
+      },
+      "impersonation": {
+        "label": "Claims to be an organisation",
+        "body": "It presents itself as a bank or a government office. Verify through an official number before you respond."
+      }
+    }
+  },
+
+  "history": {
+    "title": "Check history",
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "earlier": "Earlier",
+    "empty": "No checks yet",
+    "emptyBody": "Reports from the checks you run will appear here.",
+    "emptyAction": "Scan an APK",
+    "clear": "Clear history",
+    "clearConfirm": "Remove all saved reports from this phone?",
+    "cleared": "History cleared",
+    "types": {
+      "apk": "APK",
+      "link": "Link",
+      "message": "Message"
+    },
+    "note": "Saved on this phone only. App files are never kept."
+  },
+
+  "learn": {
+    "title": "Learn",
+    "sub": "Short explanations, in plain language.",
+    "cards": {
+      "apk": {
+        "title": "What is an APK?",
+        "body": "An APK is an Android app file, the kind you install on your phone. Apps from the Play Store arrive as APKs too, but you never see that step. When someone sends you an APK directly on WhatsApp, it did not go through the Play Store, so nobody has checked it."
+      },
+      "permissions": {
+        "title": "What are permissions?",
+        "body": "A permission is an app asking your phone for access — to your messages, your camera or your location. Android shows you a list when you install an app. Most people tap Allow without reading it, because the list is hard to understand."
+      },
+      "sms": {
+        "title": "Why is SMS access sensitive?",
+        "body": "Your bank sends a one-time password by SMS when you make a payment. An app that can read your messages can read that code as it arrives, which is enough to complete a payment without your knowledge. A torch or a game has no reason to need it."
+      },
+      "accessibility": {
+        "title": "What is accessibility access?",
+        "body": "Accessibility is a genuine feature built to help people who have difficulty using a touchscreen. It can also let an app read everything on your screen and press buttons for you. Because of that, it is one of the most misused permissions, and legitimate apps rarely need it."
+      },
+      "repackaged": {
+        "title": "What is a repackaged app?",
+        "body": "A repackaged app is a real app that someone has taken apart, modified and rebuilt. It keeps the original name and icon so it looks familiar, but it is signed with a different key and can carry extra permissions. The app you trust is not the app you are installing."
+      },
+      "safe": {
+        "title": "Can a check prove an app is safe?",
+        "body": "No. AppAutopsy reads what a file says about itself. It cannot see what the app will do once it runs. A low score means no warning signs appeared in the checks that ran — not that the app is harmless."
+      }
+    }
+  },
+
+  "settings": {
+    "title": "Settings",
+    "language": "Language",
+    "languageHint": "Choose the language for explanations and results.",
+    "appearance": "Appearance",
+    "appearanceHint": "Follow your phone, or choose either look.",
+    "theme": {
+      "system": "System",
+      "light": "Light",
+      "dark": "Dark"
+    },
+    "voice": "Read results aloud",
+    "voiceHint": "Use your phone's voice to read the result. Text is always shown as well.",
+    "voiceUnavailable": "No voice is installed on this phone for this language, so reading aloud is unavailable.",
+    "about": "About AppAutopsy",
+    "version": "Version",
+    "privacy": "Privacy",
+    "privacyBody": "The app file you choose is sent to the analysis service so its information can be read. It is not installed, not run, and not kept on this phone. Only a short summary of the result is saved here for your history, and you can clear it at any time.",
+    "privacyLimit": "This is not a guarantee of safety. AppAutopsy performs static analysis only.",
+    "reset": "Reset app",
+    "resetConfirm": "Clear history and settings on this phone?",
+    "demoMode": "Demo mode",
+    "demoModeOn": "On — showing sample results",
+    "demoModeOff": "Off — connected to the analysis service"
+  },
+
+  "errors": {
+    "title": "Something went wrong",
+    "body": "We couldn't complete the check.",
+    "kind": {
+      "offline": "We could not reach the analysis service. Check your internet connection and try again.",
+      "timeout": "The check took too long to finish. Please try again.",
+      "too_large": "This file is too large to check. The limit is 100 MB.",
+      "rate_limited": "Too many checks were made just now. Please wait a moment and try again.",
+      "bad_request": "That file or link could not be read. Please check it and try again.",
+      "not_found": "We could not find that report. It may have expired.",
+      "server": "The analysis service had a problem. Please try again shortly.",
+      "unknown": "We couldn't complete the check."
+    },
+    "manifestUnreadable": "We couldn't read this file",
+    "manifestUnreadableBody": "The information inside this app file could not be read, so no result was produced. This can happen with a damaged or unusual file. Please try another.",
+    "invalidUrl": "This does not look like a web address. Please check it and try again.",
+    "invalidUrlScheme": "Only links starting with http or https can be checked."
+  },
+
+  "disclaimer": "Static analysis only. This is not a guarantee of safety."
+}

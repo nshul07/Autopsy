@@ -1,0 +1,164 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ---------------------------------------------------------------------------
+   Design tokens
+   Light values are the default; the dark theme is a pure variable swap so a
+   component never needs a `dark:` variant for colour. Dark mode is a real
+   palette (deeper, desaturated risk colours on near-black surfaces), not an
+   inversion of the light one.
+--------------------------------------------------------------------------- */
+:root {
+  --canvas: #f6f7f9;
+  --surface: #ffffff;
+  --sunken: #f1f3f6;
+  --elevated: #ffffff;
+
+  --line: #e3e6eb;
+  --line-strong: #cdd3dc;
+
+  --ink: #141a24;
+  --ink-soft: #38414f;
+  --ink-muted: #626d7d;
+  --ink-faint: #8b95a3;
+
+  --brand: #14355f;
+  --brand-hover: #0e2848;
+  --brand-soft: #eaf0f8;
+  --brand-ink: #14355f;
+
+  --risk-low: #1f7a4d;
+  --risk-low-bg: #e8f4ec;
+  --risk-low-border: #bcdcc8;
+  --risk-low-text: #1a6440;
+
+  --risk-medium: #a97516;
+  --risk-medium-bg: #fbf2dd;
+  --risk-medium-border: #ecd5a0;
+  --risk-medium-text: #855b0f;
+
+  --risk-high: #b3382a;
+  --risk-high-bg: #fcece9;
+  --risk-high-border: #eec4bc;
+  --risk-high-text: #962d21;
+
+  --shadow-card: 0 1px 2px rgba(20, 26, 36, 0.05), 0 1px 1px rgba(20, 26, 36, 0.03);
+  --shadow-raised: 0 2px 10px rgba(20, 26, 36, 0.08);
+  --shadow-nav: 0 -1px 0 var(--line);
+}
+
+[data-theme='dark'] {
+  --canvas: #0e1116;
+  --surface: #171b22;
+  --sunken: #1e232b;
+  --elevated: #1e232b;
+
+  --line: #2a3139;
+  --line-strong: #3a434e;
+
+  --ink: #eef1f5;
+  --ink-soft: #c3cad4;
+  --ink-muted: #98a2b0;
+  --ink-faint: #77818f;
+
+  --brand: #5b8fd6;
+  --brand-hover: #79a5e2;
+  --brand-soft: #1b2634;
+  --brand-ink: #9dc0ea;
+
+  --risk-low: #4aa877;
+  --risk-low-bg: #142a20;
+  --risk-low-border: #2c5140;
+  --risk-low-text: #7cc79b;
+
+  --risk-medium: #d9a544;
+  --risk-medium-bg: #2b2415;
+  --risk-medium-border: #574827;
+  --risk-medium-text: #e6bf72;
+
+  --risk-high: #e0705f;
+  --risk-high-bg: #2e1a17;
+  --risk-high-border: #5c332c;
+  --risk-high-text: #ef9b8d;
+
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-raised: 0 2px 12px rgba(0, 0, 0, 0.5);
+  --shadow-nav: 0 -1px 0 var(--line);
+}
+
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    @apply bg-canvas text-ink font-sans antialiased;
+    /* Stop the iOS/Android overscroll flash from showing a white band. */
+    overscroll-behavior-y: none;
+  }
+
+  * {
+    @apply border-line;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--brand);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  ::selection {
+    background: var(--brand-soft);
+    color: var(--brand-ink);
+  }
+
+  /* Respect the user's motion preference globally, including the gauges. */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+@layer components {
+  /* Phone-first page frame: content is capped at a readable column width and
+     centred, so the same markup works on a phone and on a tablet. */
+  .container-page {
+    @apply mx-auto w-full max-w-shell px-4 sm:px-6;
+  }
+
+  .card {
+    @apply rounded-xl border border-line bg-surface shadow-card;
+  }
+
+  /* Safe-area aware bottom padding for the fixed nav bar. */
+  .pb-nav {
+    padding-bottom: calc(72px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .pt-safe {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+
+@layer utilities {
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
