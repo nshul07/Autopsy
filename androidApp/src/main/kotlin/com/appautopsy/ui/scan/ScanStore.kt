@@ -78,6 +78,18 @@ object ScanStore {
         runCatching { JSONArray(raw ?: "[]") }.getOrElse { JSONArray() }
 }
 
+/**
+ * Where a scan came from, as the store records it.
+ *
+ * A share or a paste is still hand-entered text; only a tapped link is LINK.
+ * Kept here rather than on [ScanOrigin] so the gate policy stays pure Kotlin
+ * with no dependency on this file's Android imports.
+ */
+fun ScanOrigin.toStoreSource(): ScanStore.Source = when (this) {
+    ScanOrigin.LINK -> ScanStore.Source.LINK
+    ScanOrigin.SHARE, ScanOrigin.MANUAL, ScanOrigin.NOTIFICATION -> ScanStore.Source.MANUAL
+}
+
 /** A rejected scan is still a checked link — count it as warned with score 0. */
 fun ScanStore.record(result: ScanResult, source: ScanStore.Source, context: Context) {
     val verdict = if (result is ScanResult.Rejected) "yellow" else result.verdict.id

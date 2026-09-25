@@ -55,4 +55,9 @@ dependencies {
     implementation(libs.compose.ui.tooling.preview)
     implementation(libs.compose.material3)
     debugImplementation(libs.compose.ui.tooling)
+
+    // The handoff policy (LinkGate) is deliberately Android-free, so it is
+    // tested here as plain JVM code rather than only exercised by hand on a
+    // device. Gradle picks up src/test/kotlin automatically.
+    testImplementation(libs.junit)
 }
