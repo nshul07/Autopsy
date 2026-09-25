@@ -67,7 +67,10 @@ fun ScoreRow(score: Int, bandId: String, catalog: Catalog) {
             .padding(vertical = 8.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
-        Text(text = "Risk score: $score / 100", style = MaterialTheme.typography.titleMedium)
+        Text(
+            text = catalog.text("ui.risk_score", mapOf("score" to score.toString())),
+            style = MaterialTheme.typography.titleMedium,
+        )
         Text(
             text = catalog.text("verdict.${bandToVerdict(bandId)}"),
             style = MaterialTheme.typography.titleMedium,

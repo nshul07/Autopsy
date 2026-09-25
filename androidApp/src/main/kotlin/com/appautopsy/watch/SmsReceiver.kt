@@ -11,6 +11,7 @@ import com.appautopsy.AppAutopsyApp
 import com.appautopsy.MainActivity
 import com.appautopsy.analysis.message.checkMessage
 import com.appautopsy.analysis.model.Verdict
+import com.appautopsy.ui.scan.ScanStore
 
 /**
  * Incoming SMS → analyze → warn, all on-device.
@@ -40,19 +41,27 @@ class SmsReceiver : BroadcastReceiver() {
             }.getOrNull()
             body.append(message?.messageBody ?: "")
         }
-        analyzeAndWarn(context, body.toString(), source = "SMS")
+        analyzeAndWarn(context, body.toString(), source = "SMS", storeAs = ScanStore.Source.SMS)
     }
 
     companion object {
         const val CHANNEL_ID = "appautopsy_alerts"
 
         /** Shared by the notification listener: one warn path, one behavior. */
-        fun analyzeAndWarn(context: Context, text: String, source: String) {
+        fun analyzeAndWarn(
+            context: Context,
+            text: String,
+            source: String,
+            storeAs: ScanStore.Source,
+        ) {
             if (text.isBlank()) return
             val container = AppAutopsyApp.container
             val report = runCatching { checkMessage(text, container.rules) }.getOrNull()
                 ?: return
             val verdict = Verdict.fromId(report.verdictId)
+            // Every auto-scan counts on the dashboard — a clean message was
+            // still a checked message. Only the *notification* is suppressed.
+            ScanStore.record(context, verdict, report.score, storeAs)
             if (verdict == Verdict.GREEN) return // silent unless risky
 
             val manager = context.getSystemService(NotificationManager::class.java)

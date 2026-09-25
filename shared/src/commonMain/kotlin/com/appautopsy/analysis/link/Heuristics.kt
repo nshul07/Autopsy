@@ -76,24 +76,123 @@ fun isIpAddress(host: String): Boolean {
     }
 }
 
-fun checkBrandLookalike(domain: String, rules: com.appautopsy.analysis.rules.Rules): String? {
-    val domainClean = domain.lowercase().trim()
-    if (domainClean.isEmpty()) return null
+/** A brand impersonation hit, plus how damning the signal is. */
+data class BrandMatch(val brand: String, val strong: Boolean)
 
-    val maxDist = rules.linkRules.lookalikeMaxEditDistance
-    val lenTol = rules.linkRules.lookalikeLengthTolerance
+/**
+ * Words that only ever appear next to a brand in a phishing lure. Their
+ * presence next to a brand token turns a mere "contains the brand name"
+ * coincidence into an impersonation signal.
+ */
+private val LURE_WORDS = setOf(
+    "verify", "verification", "secure", "security", "login", "signin", "logon",
+    "update", "kyc", "reward", "rewards", "claim", "support", "account",
+    "wallet", "pay", "payment", "payments", "banking", "netbanking", "official",
+    "service", "services", "help", "helpdesk", "alert", "notice", "gift",
+    "gifts", "offer", "offers", "bonus", "team", "care", "customer",
+    "customercare", "portal", "auth", "online", "india", "app", "refund",
+    "cashback", "loan", "loans", "card", "upi", "unlock", "confirm",
+)
+
+/**
+ * Brand look-alike, four signals:
+ *  1. exact brand SLD on a wrong TLD — sbi.xyz, microsoft.net        [strong]
+ *  2. typo-squat — small edit distance to a brand token — rnmicrosoft [strong
+ *     on tokens >= 6 chars at distance 1; weaker otherwise]
+ *  3. containment — a brand token buried in a lured-up domain —
+ *     microsoft-secure-login, paytm-verify, claim-reward-flipkart   [weak]
+ *  4. subdomain spoof — brand token among the labels while someone else owns
+ *     the domain — sbi.verify-loan.xyz, microsoft.com.verify-login.xyz [strong]
+ *
+ * [BrandMatch.strong] means "this is impersonation by construction, not a
+ * coincidence": the scorer turns those RED directly, because a signed-out
+ * score of 35 would otherwise only warn.
+ *
+ * The brand's own domains (incl. any subdomain of them) return null —
+ * login.microsoft.com stays green. That is the exact-match guard at the top.
+ *
+ * Fuzzy signals use conservative tokens (brand name + aliases + primary SLD);
+ * short generic tokens like "fb"/"t" participate only in exact/label checks,
+ * never in fuzzy, so olive.com is never "Microsoft" and a lone "t" label is
+ * never "Telegram".
+ */
+fun checkBrandLookalikeMatch(
+    hostname: String,
+    rules: com.appautopsy.analysis.rules.Rules,
+): BrandMatch? {
+    // Punycode first (xn--pple-43d.com → аpple.com), then fold confusables
+    // to ASCII (а→a → apple). The raw-vs-official guard below uses only the
+    // DECODED string, so a homoglyph "аpple.com" never passes as the real
+    // apple.com — folding is for matching brands, never for trusting hosts.
+    val decoded = if ("xn--" in hostname) Punycode.decodeHost(hostname.lowercase()) else hostname.lowercase()
+    val split = splitHost(decoded)
+    val sld = split.domain
+    val reg = if (split.suffix.isNotEmpty()) "$sld.${split.suffix}" else sld
+    if (reg.isEmpty()) return null
+    val rawLabels = decoded.split('.').filter { it.isNotEmpty() }.toList()
+    val sldFolded = Confusables.fold(sld)
+    val labelsFolded = rawLabels.map { Confusables.fold(it) }.toSet()
+    val lured = rawLabels.any { Confusables.fold(it).split('-', '_').any { p -> p in LURE_WORDS } }
 
     for (brand in rules.brands) {
-        for (officialDomain in brand.officialDomains) {
-            val offName = splitHost(officialDomain.lowercase()).domain
-            if (domainClean == offName) continue // exact official domain
-            if (kotlin.math.abs(domainClean.length - offName.length) > lenTol) continue
-            val dist = boundedEditDistance(domainClean, offName, maxDist)
-            if (dist in 1..maxDist) return brand.name
+        val official = brand.officialDomains.map { it.lowercase() }.toSet()
+        // Literally the brand's own domain (never the folded form!) → clean.
+        if (reg in official || official.any { it.isNotEmpty() && reg.endsWith(".$it") }) {
+            continue
         }
+
+        val exactTokens = buildSet {
+            official.forEach { add(splitHost(it).domain) }
+            add(brand.name.lowercase().replace(" ", ""))
+            brand.aliases.forEach { add(it.lowercase().replace(" ", "")) }
+        }.filter { it.length >= 3 }.toSet()
+
+        val fuzzyTokens = buildSet {
+            add(brand.name.lowercase().replace(" ", ""))
+            brand.aliases.forEach { add(it.lowercase().replace(" ", "")) }
+            official.firstOrNull()?.let { add(splitHost(it).domain) }
+        }.filter { it.length >= 4 }.toSet()
+
+        // 1. right brand name, wrong domain — in ASCII or via homoglyphs.
+        //    Someone registered the brand's exact word on a domain that is
+        //    not theirs: impersonation, not coincidence.
+        if (sldFolded in exactTokens) return BrandMatch(brand.name, strong = true)
+
+        for (t in fuzzyTokens) {
+            // 2. typo-squat, distance budget scaled to token length
+            val budget = if (t.length >= 7) rules.linkRules.lookalikeMaxEditDistance else 1
+            if (budget > 0 &&
+                kotlin.math.abs(sldFolded.length - t.length) <= rules.linkRules.lookalikeLengthTolerance
+            ) {
+                val d = boundedEditDistance(sldFolded, t, budget)
+                if (d in 1..budget) {
+                    // Distance 1 or 2 on a long token is a deliberate misspell
+                    // (rnmicrosoft, paytrn). Distance 2 on a short token is a
+                    // guess; keep it a warning.
+                    val strong = d == 1 || t.length >= 6
+                    return BrandMatch(brand.name, strong = strong)
+                }
+            }
+            // 3. containment — only counts when the domain is lured up
+            //    (microsoft-secure-login). A bare containment match on its
+            //    own is too loose: "olive" contains "live", "snapple"
+            //    contains "apple", "costco" contains "cost".
+            if (lured && sldFolded.length > t.length && t in sldFolded) {
+                return BrandMatch(brand.name, strong = true)
+            }
+        }
+
+        // 4. brand token in the hostname but someone else owns the domain
+        if (labelsFolded.any { it in exactTokens }) return BrandMatch(brand.name, strong = true)
     }
     return null
 }
+
+/** Convenience for callers that only need the brand name. */
+fun checkBrandLookalike(
+    hostname: String,
+    rules: com.appautopsy.analysis.rules.Rules,
+): String? = checkBrandLookalikeMatch(hostname, rules)?.brand
 
 /** Runs every offline check; pure, same input → same list, no side effects. */
 fun evaluateOfflineHeuristics(url: NormalizedUrl, rules: com.appautopsy.analysis.rules.Rules): List<LinkCheckResult> {
@@ -120,8 +219,10 @@ fun evaluateOfflineHeuristics(url: NormalizedUrl, rules: com.appautopsy.analysis
     // 2. IP host
     if (isIpAddress(hostname)) flagged("ip_host")
 
-    // 3. Punycode
-    if ("xn--" in hostname) flagged("punycode")
+    // 3. Punycode — show the user the address as it really spells.
+    if ("xn--" in hostname) {
+        flagged("punycode", params = mapOf("decoded" to Punycode.decodeHost(hostname)))
+    }
 
     // 4. @ symbol anywhere in the URL
     if ("@" in url.value) flagged("at_symbol")
@@ -163,9 +264,18 @@ fun evaluateOfflineHeuristics(url: NormalizedUrl, rules: com.appautopsy.analysis
         flagged("direct_apk")
     }
 
-    // 10. Brand look-alike
-    checkBrandLookalike(split.domain, rules)?.let { brand ->
-        flagged("brand_lookalike", params = mapOf("brand" to brand))
+    // 10. Brand look-alike (typo squat, homoglyph, containment, subdomain spoof).
+    //     Strong matches are marked by points alone being insufficient, so we
+    //     encode the strength in an extra param the scorer reads: a strong
+    //     impersonation must land RED, not a 35-point warning.
+    checkBrandLookalikeMatch(hostname, rules)?.let { m ->
+        flagged(
+            "brand_lookalike",
+            params = buildMap {
+                put("brand", m.brand)
+                if (m.strong) put("strong", "1")
+            },
+        )
     }
 
     return results

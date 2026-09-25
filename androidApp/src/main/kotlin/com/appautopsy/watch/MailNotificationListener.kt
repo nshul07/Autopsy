@@ -29,7 +29,12 @@ class MailNotificationListener : NotificationListenerService() {
         val pkg = sbn.packageName ?: return
         if (pkg !in MAIL_PACKAGES) return
 
-        SmsReceiver.analyzeAndWarn(applicationContext, text, source = pkgShortName(pkg))
+        SmsReceiver.analyzeAndWarn(
+            applicationContext,
+            text,
+            source = pkgShortName(pkg),
+            storeAs = com.appautopsy.ui.scan.ScanStore.Source.MAIL,
+        )
     }
 
     private fun pkgShortName(pkg: String): String = when {

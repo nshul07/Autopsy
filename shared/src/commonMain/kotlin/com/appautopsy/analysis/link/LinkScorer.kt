@@ -33,7 +33,18 @@ object LinkScorer {
         val score = minOf(rawScore, rules.maxScore)
         val bandDef = RiskEngine.bandFor(score, rules)
 
-        val critical = checks.any {
+        // A punycode host that matches a brand (xn--pple-43d.com) is a
+        // homoglyph spoof by construction — no legitimate site registers
+        // those. Same for a strong brand match (brand's own word on someone
+        // else's domain, a typo-squat, a brand buried in a lured-up domain):
+        // 35 points alone would only warn, and a warning is the wrong answer
+        // for a link that is impersonating a bank.
+        val flagged = checks.filter { it.status == CheckStatus.FLAGGED }.map { it.id }.toSet()
+        val homoglyphSpoof = "punycode" in flagged && "brand_lookalike" in flagged
+        val strongBrand = checks.any {
+            it.id == "brand_lookalike" && it.status == CheckStatus.FLAGGED && it.params["strong"] == "1"
+        }
+        val critical = homoglyphSpoof || strongBrand || checks.any {
             it.status == CheckStatus.FLAGGED && rules.linkRules.checks[it.id]?.critical == true
         }
         var verdict = Verdict.fromId(bandDef.verdict)
