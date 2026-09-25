@@ -64,6 +64,7 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
 fun AppNavHost(incomingText: String?) {
     val container = AppAutopsyApp.container
@@ -123,6 +124,7 @@ fun AppNavHost(incomingText: String?) {
                 } else {
                     ResultScreen(
                         catalog = catalog,
+                        lang = lang,
                         result = scan,
                         onBack = { navController.navigate("home") },
                     )
