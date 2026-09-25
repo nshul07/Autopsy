@@ -70,7 +70,20 @@ later commits (`c73344a`, `cab4771`). It is already in merged history on `main`,
 so a bisect landing on it will fail. Squash or reorder if that matters.
 
 `releases/v3.apk` is built (`versionCode 3`, `versionName 3.0`) and is a **debug**
-build, like v1 and v2.
+build, like v1, v2 and **v4**.
+
+**Latest session — v4 UI shipped (committed as `4ec317b`).** The mockup design is
+now native Compose in `androidApp/` — onboarding (first-run, `app_state` prefs),
+Home with 2×2 stat tiles + scan doors + recent feed, Scan hub, dedicated
+link/message scanners, History tab (filter chips, clear-with-confirm), result
+screen with tinted verdict banner + copy + share, language bottom sheet
+(persisted). `DashboardScreen.kt` is deleted. ScanStore now also stores a link
+*host* label (never a full URL, never message text). `RecentResults` in
+`MainActivity` is an in-memory LRU (max 20, dies with the process) so a history
+row reopens its full report in-session. 44 new i18n keys → **210 × EN/HI/PA**;
+backend data copy synced. `releases/v4.apk` = `versionCode 4` / `4.0`, debug,
+**includes the link-tap browser-role fix** that v3.apk predates. The Scan-APK
+door is a deliberate "not in this build" badge (T2 still unbuilt — see §5).
 
 ---
 
@@ -78,17 +91,17 @@ build, like v1 and v2.
 
 | Piece | State |
 |---|---|
-| `data/*.json` — rules, categories, patterns, brands, link_rules, messages_{en,hi,pa}, playbook_{en,hi,pa} | ✅ canonical at repo root; `messages_*` now **160 keys × 3 langs**; `brands.json` ~40 real brands |
-| `backend/` Python reference | ✅ **55/55 pytest green** (`cd backend && python -m pytest -q`). Was **behind** the Kotlin engine; §4 is now applied and the two agree on the whole demo table |
-| `shared/` KMP — all pure analysis logic | ✅ **39/39 `:shared:jvmTest` green** (RiskEngine 6, LinkDetection 11, Presentation 8, Repackaging 8, I18n 6) |
+| `data/*.json` — rules, categories, patterns, brands, link_rules, messages_{en,hi,pa}, playbook_{en,hi,pa} | ✅ canonical at repo root; `messages_*` now **210 keys × 3 langs**; `brands.json` ~40 real brands |
+| `backend/` Python reference | ✅ **57/57 pytest green** (`cd backend && python -m pytest -q`). Was **behind** the Kotlin engine; §4 is now applied and the two agree on the whole demo table |
+| `shared/` KMP — all pure analysis logic | ✅ **45/45 `:shared:jvmTest` green** (+ **7** androidApp unit tests) — RiskEngine 6, LinkDetection 17, Presentation 8, Repackaging 8, I18n 6 |
 | `shared/` modules | rules, model, catalog (i18n EN fallback + `{param}`), core/{Category,Permissions,RiskEngine,Patterns,Impersonation,Repackaging,SignerHistory,Calibration,Prescription,Playbook,Explain}, link/{Normalize,**Homoglyphs**,Heuristics,LinkScorer,LinkModels}, message/MessageChecker — **21 files** |
-| `androidApp/` | ✅ **builds and works for the link/message/SMS/mail paths** — `MainActivity` (4 entry doors + NavHost), `AppAutopsyApp`, ui/{Cards,Common,DashboardScreen,ResultScreen,Theme}, ui/scan/{LinkScanner,ScanStore}, watch/{SmsReceiver,MailNotificationListener}, res/values/themes.xml — **18 Kotlin files** (+1 test file) |
+| `androidApp/` | ✅ **builds and works for the link/message/SMS/mail paths** — v4 UI (`4ec317b`): `MainActivity` (5 entry doors + NavHost + in-memory `RecentResults` LRU), `AppAutopsyApp`, ui/{Cards,Common,HomeScreen,ScanScreens,HistoryScreen,OnboardingScreen,LanguageSheet,ResultScreen,Widgets,Icons,Theme}, ui/scan/{LinkScanner,ScanStore,LinkGate,LinkHandoff}, watch/{SmsReceiver,MailNotificationListener,RiskNotifier}, res/values/themes.xml |
 | APK parsing (`androidApp/parse/`) | ❌ **does not exist**. Picking an `.apk` does nothing. See §5 T2. |
 | Intel DB (`androidApp/intel/`) | ❌ **does not exist**. No scan counts, no version diff, no crowd intel. See §5 T3. |
 | Online link expansion + SSRF guard | ❌ **does not exist in Kotlin**. Offline heuristics only; `downgrade_redirect` / `reputation_flagged` are reported `not_checked` with 0 points. |
 | Demo APKs | ❌ none built. `tools/make_demo_apks.md` does not exist yet. |
-| README, releases | ✅ `README.md` at root; `releases/v1.apk` (1.0), `releases/v2.apk` (2.0) committed; `releases/v3.apk` (3.0) built this session — **all three are debug builds** |
-| Working tree | **not clean** — backend parity work (§4), `CLAUDE.md`, `versionCode` bump and `releases/v3.apk` are uncommitted; `frontend/` is committed on `main` |
+| README, releases | ✅ `README.md` at root; `releases/{v1,v2,v3,v4}.apk` committed — **all four are debug builds**; v4 (`4ec317b`) is the one to install, it carries the browser-role link fix that v3 predates |
+| Working tree | clean apart from this `CLAUDE.md` edit; `frontend/` remains committed on `main`, unreconciled (see header) |
 
 ### Toolchain (Windows, this machine)
 - **System Gradle 9.6.1 — there is NO wrapper. `gradle`, never `./gradlew`.**
