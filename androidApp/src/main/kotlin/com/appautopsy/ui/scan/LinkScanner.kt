@@ -45,6 +45,14 @@ sealed class ScanResult {
 
 object LinkScanner {
 
+    /**
+     * Non-localized identity for the held-link notification. A notification id
+     * must never derive from display text: switching EN→हि would change the id
+     * and stack a second warning for the same link instead of replacing the
+     * first.
+     */
+    const val KEY_HELD_LINK = "held-link"
+
     fun scan(rules: Rules, input: String): ScanResult {
         val trimmed = input.trim()
         if (trimmed.isEmpty()) return ScanResult.Rejected("error.invalid_url")

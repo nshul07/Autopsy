@@ -7,6 +7,23 @@
     <uses-permission android:name="android.permission.RECEIVE_SMS" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
+    <!-- Needed to hand a clean link back to a real browser. API 30+ hides
+         other installed packages from us without this, and the failure mode
+         is silent: queryIntentActivities returns only ourselves, so the
+         "which browser should I use?" picker looks empty. -->
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <category android:name="android.intent.category.BROWSABLE" />
+            <data android:scheme="https" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <category android:name="android.intent.category.BROWSABLE" />
+            <data android:scheme="http" />
+        </intent>
+    </queries>
+
     <application
         android:name=".AppAutopsyApp"
         android:allowBackup="false"
@@ -39,6 +56,16 @@
                 <category android:name="android.intent.category.DEFAULT" />
                 <data android:mimeType="text/plain" />
             </intent-filter>
+
+            <!-- And in the text-selection menu of ANY app (select a link in
+                 an Instagram DM or a Facebook post → "AppAutopsy"). This is
+                 the only door into apps whose in-app WebView cannot be
+                 intercepted and whose share sheet is not offered. -->
+            <intent-filter>
+                <action android:name="android.intent.action.PROCESS_TEXT" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/plain" />
+            </intent-filter>
         </activity>
 
         <receiver
@@ -49,6 +76,13 @@
                 <action android:name="android.provider.Telephony.SMS_RECEIVED" />
             </intent-filter>
         </receiver>
+
+        <!-- The "Open anyway" action on a held-link warning. Not exported:
+             only our own PendingIntent may trigger it, so no other app can
+             make this device open a URL of its choosing. -->
+        <receiver
+            android:name=".watch.HandoffReceiver"
+            android:exported="false" />
 
         <service
             android:name=".watch.MailNotificationListener"

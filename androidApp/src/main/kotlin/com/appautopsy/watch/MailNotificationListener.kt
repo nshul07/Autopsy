@@ -32,7 +32,7 @@ class MailNotificationListener : NotificationListenerService() {
         SmsReceiver.analyzeAndWarn(
             applicationContext,
             text,
-            source = pkgShortName(pkg),
+            sourceLabel = pkgShortName(pkg),
             storeAs = com.appautopsy.ui.scan.ScanStore.Source.MAIL,
         )
     }

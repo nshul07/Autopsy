@@ -1,12 +1,9 @@
 package com.appautopsy.watch
 
-import android.app.NotificationChannel
-import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import androidx.core.app.NotificationCompat
 import com.appautopsy.AppAutopsyApp
 import com.appautopsy.MainActivity
 import com.appautopsy.analysis.message.checkMessage
@@ -41,17 +38,18 @@ class SmsReceiver : BroadcastReceiver() {
             }.getOrNull()
             body.append(message?.messageBody ?: "")
         }
-        analyzeAndWarn(context, body.toString(), source = "SMS", storeAs = ScanStore.Source.SMS)
+        analyzeAndWarn(context, body.toString(), sourceLabel = "SMS", storeAs = ScanStore.Source.SMS)
     }
 
     companion object {
-        const val CHANNEL_ID = "appautopsy_alerts"
+        /** Alias so the channel id keeps one definition, in RiskNotifier. */
+        const val CHANNEL_ID = RiskNotifier.CHANNEL_ID
 
         /** Shared by the notification listener: one warn path, one behavior. */
         fun analyzeAndWarn(
             context: Context,
             text: String,
-            source: String,
+            sourceLabel: String,
             storeAs: ScanStore.Source,
         ) {
             if (text.isBlank()) return
@@ -64,12 +62,10 @@ class SmsReceiver : BroadcastReceiver() {
             ScanStore.record(context, verdict, report.score, storeAs)
             if (verdict == Verdict.GREEN) return // silent unless risky
 
-            val manager = context.getSystemService(NotificationManager::class.java)
-            ensureChannel(manager)
-
+            val catalog = container.catalog
             val openIntent = PendingIntent.getActivity(
                 context,
-                source.hashCode(),
+                sourceLabel.hashCode(),
                 Intent(context, MainActivity::class.java).apply {
                     putExtra(MainActivity.EXTRA_PASTE, text)
                     action = Intent.ACTION_VIEW
@@ -77,34 +73,30 @@ class SmsReceiver : BroadcastReceiver() {
                 PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
             )
 
-            val symbol = when (verdict) {
-                Verdict.RED -> "⛔"
-                Verdict.YELLOW -> "⚠️"
-                Verdict.GREEN -> "✅"
-            }
-            val reason = report.signals.firstOrNull()?.let { container.catalog.text(it) }
-                ?: container.catalog.text("verdict.${verdict.id}")
+            // Body: the message's own signals plus any link findings, all
+            // localized. Never the message text itself — F23's hard rule.
+            val reasons = report.signals.map { catalog.text(it) } +
+                report.links.flatMap { link ->
+                    link.reasons.map { (key, params) -> catalog.text(key, params) }
+                }
 
-            manager.notify(
-                (text.hashCode() and 0x7fffffff) % 100000,
-                NotificationCompat.Builder(context, CHANNEL_ID)
-                    .setSmallIcon(android.R.drawable.ic_dialog_alert)
-                    .setContentTitle("$symbol $source — ${container.catalog.text("verdict.${verdict.id}")}")
-                    .setContentText(reason)
-                    .setStyle(NotificationCompat.BigTextStyle().bigText(reason))
-                    .setContentIntent(openIntent)
-                    .setAutoCancel(true)
-                    .build(),
+            RiskNotifier.show(
+                context = context,
+                notificationId = RiskNotifier.idFor(sourceLabel, text.trim()),
+                content = RiskNotifier.Content(
+                    sourceLabel = sourceLabel,
+                    verdict = verdict,
+                    verdictWord = catalog.text("verdict.${verdict.id}"),
+                    score = report.score,
+                    reasons = reasons.distinct(),
+                    // No escape hatch here: there is no single URL the user
+                    // tapped, and offering "open anyway" on a message would
+                    // invite them into the very link being warned about.
+                    openAnywayLabel = null,
+                    openAnywayUrl = null,
+                ),
+                contentIntent = openIntent,
             )
-        }
-
-        private fun ensureChannel(manager: NotificationManager) {
-            val channel = NotificationChannel(
-                CHANNEL_ID,
-                "Phishing alerts",
-                NotificationManager.IMPORTANCE_HIGH,
-            )
-            manager.createNotificationChannel(channel)
         }
     }
 }
